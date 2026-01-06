@@ -1,0 +1,78 @@
+"""
+Custom decorator emulating OpenAI tool definition (`@function_tool` decorator)
+(https://openai.github.io/openai-agents-python/tools/#function-tools)
+to expand for ARE CORE evaluation aspects (READ, WRITE, etc.)
+"""
+
+from typing import Callable, Union
+from agents import Agent, FunctionTool, function_tool
+
+
+def agent_tool(func=None, *, doc_enabled=True):
+    def decorator(f):
+        f.is_agent_tool = True
+        if not (doc_enabled):
+            f.__doc__ = ""  # Strips the docstring at runtime
+        return f
+    return decorator if func is None else decorator(func)
+
+
+def agent_toolset(obj) -> list:
+    """
+    Returns a list with callable methods that are marked with
+    the 'is_agent_tool' attribute on the given object.
+
+    Args:
+        obj: The object (typically an agent instance) to inspect.
+
+    Returns:
+        A list where items callable methods.
+    """
+    tools = []
+    for attr_name in dir(obj):
+        attr = getattr(obj, attr_name)
+        if callable(attr) and getattr(attr, "is_agent_tool", False):
+            tools.append(attr)
+    return tools
+
+
+def build_tool_schema(func: Callable) -> dict:
+
+    agent = Agent(
+        name="Assistant",
+        tools=[function_tool(func)],
+    )
+    tool = agent.tools[0]
+    assert isinstance(tool, FunctionTool)
+    schema = tool.params_json_schema
+
+    # Build the final tool schema dictionary.
+    tool_dict = {
+        "type": "function",
+        "function": {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": schema,
+        }
+    }
+    # print(json.dumps(tool_dict, indent=2))
+    return tool_dict
+
+
+# Hacky wrapper to use OpenAI's robust tool schema creation
+def build_toolset(toolsets):
+
+    assert isinstance(toolsets, list)
+    # Aggregate all tools from the provided toolset objects.
+    tools = []
+    for toolset in toolsets:
+        # extract_agent_toolset is a utility function that returns a dict of {tool_name: callable}
+        toolset_list = agent_toolset(toolset)
+        # We add the tool callables to our aggregated list.
+        tools.extend(toolset_list)
+    # turn python functions into tools and save a reverse map
+    # following: https://cookbook.openai.com/examples/orchestrating_agents
+    tool_schemas = [build_tool_schema(tool) for tool in tools]
+    tools_map = {tool.__name__: tool for tool in tools}
+
+    return tools, tool_schemas, tools_map
