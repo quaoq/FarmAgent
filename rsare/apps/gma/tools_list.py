@@ -425,11 +425,11 @@ class SARTools:
     @agent_tool
     def load_SAR_scenes(
             self,
-            date1,
-            date2,
+            date1:str,
+            date2:Optional[str] ,
             region: List[float] = None,
-            satellite="S1AB",  # choice is S1A, S1B, or "S1AB"
-            collection="COPERNICUS/S1_GRD",
+            satellite:str="S1AB",  # choice is S1A, S1B, or "S1AB"
+            collection:str="COPERNICUS/S1_GRD",
     ):
         """Get Sentinel-1 SAR scenes over ocean areas within a specified date range.
 
@@ -446,7 +446,7 @@ class SARTools:
                 [lon_min, lat_min, lon_max, lat_max].
             satellite (str): Satellite identifier prefix to filter scenes
                 by (e.g., "S1A" "S1B" "S1AB").Defaults to "S1AB".
-            collection (str, optional): Earth Engine image collection ID. Defaults
+            collection (str): Earth Engine image collection ID. Defaults
                 to "COPERNICUS/S1_GRD".
 
         Returns:
@@ -796,10 +796,10 @@ class SARTools:
     @agent_tool
     def generate_median_scene_composites(
             self,
-            region,
-            start_date,
-            tile_dx,
-            tile_dy,
+            region: List[float],
+            start_date:str,
+            tile_dx:float = 1,
+            tile_dy:float = 1,
             time_window_duration: str = "6 months",
             satellite: str = "",  # "S1A", "S1B", "S1AB"
     ) -> str:
@@ -811,10 +811,10 @@ class SARTools:
             S1AB_AD_MEDIAN_COMP_YYYYMMDDTHHMMSS_YYYYMMDDTHHMMSS_REGION_TILE_NNN
 
             Args:
-                region: Bounding box [lon_min, lat_min, lon_max, lat_max] (optional, for validation)
-                start_date: Start date for composite generation (optional)
-                tile_dx: Tile X resolution in degrees (optional)
-                tile_dy: Tile Y resolution in degrees (optional)
+                region: Bounding box [lon_min, lat_min, lon_max, lat_max]
+                start_date: Start date for composite generation
+                tile_dx: Tile X resolution in degrees
+                tile_dy: Tile Y resolution in degrees
                 time_window_duration: Temporal aggregation window (default: "6 months")
                 satellite: Satellite identifier ("S1A", "S1B", "S1AB", or "")
 
