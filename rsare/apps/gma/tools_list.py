@@ -473,7 +473,7 @@ class SARTools:
 
         self.state.mark_stage(ProcessingStage.SCENES_LOADED)
 
-        return f"Loaded {len(self.state.scene_ids)} scenes"
+        return f"Loaded SAR scenes"
 
     def load_vessel_detects(self, date1, date2, satellite, region):
         date_start = pd.to_datetime(date1).date()
@@ -1217,7 +1217,7 @@ class SARTools:
     @agent_tool
     def filter_shoreline_regions_sar_scenes(self, shore_distance: float = 1000.0) -> str:
         """
-        Filter SAR scenes by excluding detections within a buffer zone from shorelines.
+        Apply a shoreline-based spatial mask to SAR scenes to restrict analysis to valid offshore areas.
 
         Args:
             shore_distance: Buffer distance in meters from shoreline (default: 1000.0m = 1km).
