@@ -8,12 +8,11 @@ def main(query="Hi there!"):
 
     llm = OpenAILLM(model="gpt-4o-mini", temperature=0.1)
     
-    SARToolsCls=SARTools()
     agent = Agent(
         name="agent",
         llm=llm,
         system_message="You are a geospatial agent helping with fetching images from a database!",
-        toolsets=[SARToolsCls]
+        toolsets=[SARTools()]
     )
     print(agent.tool_schemas[0])
     response = agent.run(input="Get Sentinel-1 SAR scenes from 2018-08-01 to 2018-08-10 over Shanghai (i.e., 121.0, 30.0, 123.0, 32.0)!")

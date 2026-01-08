@@ -55,12 +55,11 @@ the study period and the number of vessels."""
 def main(query="Hi there!"):
     llm = OpenAILLM(model="gpt-4o-mini", temperature=0.1)
 
-    SARToolsCls = SARTools()
     agent = Agent(
         name="agent",
         llm=llm,
         system_message=SYSTEM_PROMPT,
-        toolsets=[SARToolsCls]
+        toolsets=[SARTools()]
     )
     # response = agent.run(input=TASK_INPUT)
     # print(response)

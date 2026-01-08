@@ -37,6 +37,10 @@ def agent_toolset(obj) -> list:
     Returns:
         A list where items callable methods.
     """
+    # FIX: accept either an instance or a class, and if it's a class, instantiate it once
+    if isinstance(obj, type):   # it's a class
+        obj = obj()             # instantiate once
+
     tools = []
     for attr_name in dir(obj):
         attr = getattr(obj, attr_name)
