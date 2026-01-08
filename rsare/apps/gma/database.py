@@ -3,15 +3,14 @@
 from typing import Optional, List, Dict, Set, Tuple, cast, Any
 from rsare.agents.agent.toolset_builder import agent_tool
 
-class Database:
+class SARTools:
 
     def __init__(self):
         """
         Initialize with the path to the GeoPackage.
         """
-        self.name = "database"
+        self.state = "init"
 
-    
     @agent_tool
     def load_SAR_scenes(
             self,
@@ -42,4 +41,5 @@ class Database:
         Returns:
             reply [str]: Message with the number of matching scenes, if any found.
         """
+        state = self.state
         return f"Loaded 10 scenes"

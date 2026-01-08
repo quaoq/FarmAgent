@@ -24,7 +24,7 @@ Constants for SAR_ARE data paths
 from pathlib import Path
 
 # Base data directory
-DATA_BASE_DIR = Path("data")
+DATA_BASE_DIR = Path("rsare/data/gma")
 
 # Vessel detections directory (contains multiple CSV files by date)
 VESSEL_DETECTIONS_DIR = DATA_BASE_DIR / "vessels"

@@ -7,6 +7,15 @@ to expand for ARE CORE evaluation aspects (READ, WRITE, etc.)
 from typing import Callable, Union
 from agents import Agent, FunctionTool, function_tool
 
+def prune_self_from_schema(schema: dict) -> dict:
+    schema = schema.copy()
+    schema["properties"] = {
+        k: v for k, v in schema.get("properties", {}).items() if k != "self"
+    }
+    if "required" in schema:
+        schema["required"] = [k for k in schema["required"] if k != "self"]
+    return schema
+
 
 def agent_tool(func=None, *, doc_enabled=True):
     def decorator(f):
@@ -44,7 +53,8 @@ def build_tool_schema(func: Callable) -> dict:
     )
     tool = agent.tools[0]
     assert isinstance(tool, FunctionTool)
-    schema = tool.params_json_schema
+    schema = prune_self_from_schema(tool.params_json_schema)
+    # schema = tool.params_json_schema
 
     # Build the final tool schema dictionary.
     tool_dict = {
