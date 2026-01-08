@@ -806,10 +806,6 @@ class SARTools:
         """
             Generate median scene composites for infrastructure detection.
 
-            This method extracts unique composite IDs (scene_id) from loaded infrastructure
-            detections. The composite ID format is:
-            S1AB_AD_MEDIAN_COMP_YYYYMMDDTHHMMSS_YYYYMMDDTHHMMSS_REGION_TILE_NNN
-
             Args:
                 region: Bounding box [lon_min, lat_min, lon_max, lat_max]
                 start_date: Start date for composite generation
@@ -1223,8 +1219,6 @@ class SARTools:
         """
         Filter SAR scenes by excluding detections within a buffer zone from shorelines.
 
-        **Used to filter out false detections near shorelines!**
-
         Args:
             shore_distance: Buffer distance in meters from shoreline (default: 1000.0m = 1km).
 
@@ -1233,7 +1227,7 @@ class SARTools:
 
         """
         if not self.state.env_data or not self.state.env_data.shoreline_path:
-            return "Warning: Shoreline data not loaded. Please call load_global_shoreline_data() first"
+            return "Warning: Shoreline data not loaded. Please  load global shoreline data first"
 
         return f"Filtered scenes by {shore_distance}m from shoreline "
 

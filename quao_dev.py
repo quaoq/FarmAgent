@@ -36,23 +36,38 @@ You must always follow the cycle:
 - Do NOT generate Observation; the system will insert it after tool calls complete.
 - When multiple tools are called in parallel, you will receive observations for all of them.  """
 
-TASK_INPUT = """Using Sentinel-1 GRD SAR imagery from the S1A and S1B satellites over the Shanghai region (121.0–123.0°E, 30.0–32.0°N) for the period from 2018-08-08 to 2018-08-10, all available SAR scenes were loaded and a 500-m border buffer was applied to remove edge artefacts. Shoreline data were then loaded, and a 1-km buffer was generated from the global shoreline dataset. This synthetic shoreline mask was used to define the valid detection area within each SAR image.
+TASK_INPUT_1 = """Using Sentinel-1 GRD SAR imagery from the S1A and S1B satellites, covering the Shanghai region (121.0–123.0°E, 30.0–32.0°N) and the period from 2018-08-08 to 2018-08-10, load all available SAR scenes and clip a 500-m border buffer to remove edge artefacts.
 
-Vessel detection was performed using the VH-polarization band and a two-parameter CFAR configuration, employing a 200 × 200-pixel inner window and a 600 × 600-pixel outer window, with detection thresholds of 16 for S1A and 19 for S1B. For each CFAR detection, 80 × 80-pixel dual-polarization (VH + VV) SAR tiles were extracted and processed using a pre-trained neural network to confirm vessel presence, remove false detections, and estimate vessel length.
+Load global shoreline data. Exclude SAR detections located within a 1-km buffer zone from the shoreline to define the valid detection area for each SAR scene..
 
-Finally, the total number of detected vessel activities during the study period, as well as the number of unique vessels, was reported."""
+Detect vessels using the VH polarization band with a two-parameter CFAR configuration, applying a 200 × 200-pixel inner window and a 600 × 600-pixel outer window. Set the detection threshold to 16 for S1A scenes and 19 for S1B scenes.
 
+For each CFAR detection, extract an 80 × 80-pixel dual-polarization (VH + VV) SAR tile. Apply a pre-trained neural network to confirm vessel presence, filter out false detections, and estimate vessel length.
 
+Finally, report the total number of detected vessel activities during the study period and the total number of vessels."""
+
+TASK_INPUT_2 = """Using Sentinel-1 GRD SAR imagery from the S1A and S1B satellites over the Gulf of Mexico (-95.0, -94.0, 29.0, 30.0) for the period from 2019-01-01 to 2019-12-31, load all available SAR scenes.
+
+Generate monthly SAR composites using a rolling 6-month median to suppress moving vessels and enhance stationary offshore objects.
+
+Load global shoreline data and exclude SAR detections located within a 1-km buffer zone from the shoreline to define the valid detection area for each SAR scene.
+
+Detect stationary offshore infrastructure on the monthly median composites using a two-parameter CFAR configuration with a 140 × 140-pixel inner window and a 200 × 200-pixel outer window.
+
+Load Sentinel-2 optical scenes (RGB + NIR) from the S2A and S2B satellites .For each detected infrastructure candidate, generate 6-month SAR (VH + VV) composites and 6-month Sentinel-2 optical (RGB + NIR) composites . Extract 100 × 100-pixel multimodal tiles centred on each detected structure, and apply a pre-trained multimodal neural network to classify each structure as wind, oil, other, or noise.
+
+Finally, report the total number of detected offshore structures and their spatial distribution."""
 def main(query="Hi there!"):
     llm = OpenAILLM(model="gpt-4o-mini", temperature=0.1)
-
+    tools = SARTools()
+    tools.state.load_infra =  True
     agent = Agent(
         name="agent",
         llm=llm,
         system_message=SYSTEM_PROMPT,
-        toolsets=[SARTools()]
+        toolsets=[tools]
     )
-    response = agent.run(input=TASK_INPUT)
+    response = agent.run(input=TASK_INPUT_1)
     print(response)
     # args = {'date1': '2018-08-08', 'date2': '2018-08-10', 'region': [121.0, 30.0, 123.0, 32.0], 'satellite': 'S1AB', 'collection': 'COPERNICUS/S1_GRD'}
     # agent.tools_map['load_SAR_scenes'](**args)
