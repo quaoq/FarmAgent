@@ -36,20 +36,11 @@ You must always follow the cycle:
 - Do NOT generate Observation; the system will insert it after tool calls complete.
 - When multiple tools are called in parallel, you will receive observations for all of them.  """
 
-TASK_INPUT = """Using Sentinel-1 GRD SAR imagery over Shanghai (121.0, 123.0, 30.0, 32.0)
-from 2018-08-08 to 2018-08-10, load all available SAR scenes and apply
-radiometric calibration, thermal noise removal, terrain correction, and
-a 500-m border buffer to remove edge artefacts. Detect vessels using the
-VH polarization band with a two-parameter CFAR configuration employing a
-200 × 200 pixel inner window and a 600 × 600 pixel outer window, calibrated
-with time-dependent thresholds to maintain a 60% detection rate for vessels
-15–20 m in length. Exclude detections within 1 km of the global shoreline
-and remove stationary objects from vessel detections to ensure that only
-moving vessels are retained. For each CFAR detection, extract 80 × 80 pixel
-dual-polarization (VH+VV) SAR tiles and apply the pre-trained neural network
-to confirm vessel presence, filter out false detections, and estimate vessel
-length. Finally, report the total number of detected vessel activities during
-the study period and the number of vessels."""
+TASK_INPUT = """Using Sentinel-1 GRD SAR imagery from the S1A and S1B satellites over the Shanghai region (121.0–123.0°E, 30.0–32.0°N) for the period from 2018-08-08 to 2018-08-10, all available SAR scenes were loaded and a 500-m border buffer was applied to remove edge artefacts. Shoreline data were then loaded, and a 1-km buffer was generated from the global shoreline dataset. This synthetic shoreline mask was used to define the valid detection area within each SAR image.
+
+Vessel detection was performed using the VH-polarization band and a two-parameter CFAR configuration, employing a 200 × 200-pixel inner window and a 600 × 600-pixel outer window, with detection thresholds of 16 for S1A and 19 for S1B. For each CFAR detection, 80 × 80-pixel dual-polarization (VH + VV) SAR tiles were extracted and processed using a pre-trained neural network to confirm vessel presence, remove false detections, and estimate vessel length.
+
+Finally, the total number of detected vessel activities during the study period, as well as the number of unique vessels, was reported."""
 
 
 def main(query="Hi there!"):
@@ -61,10 +52,10 @@ def main(query="Hi there!"):
         system_message=SYSTEM_PROMPT,
         toolsets=[SARTools()]
     )
-    # response = agent.run(input=TASK_INPUT)
-    # print(response)
-    args = {'date1': '2018-08-08', 'date2': '2018-08-10', 'region': [121.0, 30.0, 123.0, 32.0], 'satellite': 'S1AB', 'collection': 'COPERNICUS/S1_GRD'}
-    agent.tools_map['load_SAR_scenes'](**args)
+    response = agent.run(input=TASK_INPUT)
+    print(response)
+    # args = {'date1': '2018-08-08', 'date2': '2018-08-10', 'region': [121.0, 30.0, 123.0, 32.0], 'satellite': 'S1AB', 'collection': 'COPERNICUS/S1_GRD'}
+    # agent.tools_map['load_SAR_scenes'](**args)
 
 if __name__ == "__main__":
     main()

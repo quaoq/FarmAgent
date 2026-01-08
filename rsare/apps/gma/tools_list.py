@@ -592,7 +592,7 @@ class SARTools:
     @agent_tool
     def clip_SAR_scenes(self, clip_buffer: float = 500.0) -> str:
         """
-            Clip SAR scenes with buffer (in meters).
+            Clip SAR scenes off the borders (in meters) to eliminate potential noise artefacts.
 
             Args:
                 clip_buffer: Buffer distance in meters (default: 500m)
@@ -661,7 +661,7 @@ class SARTools:
             s1B_background_pixel_threshold: float = 18.0,
     ) -> dict:
         """
-            Evaluate hyperparameters for  CFAR vessel detection.
+            Evaluate hyperparameters for CFAR vessel detection.
 
             Args:
                 inner_window_width:width of inner window
