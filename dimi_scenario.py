@@ -29,7 +29,7 @@ def main():
     # Engine
     engine = Engine(agent, scenario)
     engine.run_scenario_oracle()
-    engine.run_scenario_agent()
+    # engine.run_scenario_agent()
 
 
 if __name__ == "__main__":
