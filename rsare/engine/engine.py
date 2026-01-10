@@ -25,9 +25,13 @@ class Engine:
         self.scenario.initiate_scenario()
         # Run the agent against the task
         self.agent.run(input=self.scenario.scenario_input)
+        print("=== Agent Workflow Solution ===")
+        print(self.agent.workflow)
 
-    def run_scenario_oracle(self):
-        self.scenario.oracle_solution()
+    def run_scenario_oracle(self, run_oracle=True):
+        self.scenario.oracle_solution(run_oracle=True)
+        print("=== Oracle Workflow Solution ===")
+        print(self.scenario.workflow)
 
     def run_scenario_dynamic(self):
         raise NotImplementedError(

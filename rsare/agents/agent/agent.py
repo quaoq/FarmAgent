@@ -8,6 +8,7 @@ from collections import deque, OrderedDict
 
 from rsare.agents.agent.base_agent import BaseAgent
 from rsare.agents.agent.toolset_builder import build_toolset
+from rsare.scenarios.scenario.workflow import WorkflowStep
 
 
 class Agent(BaseAgent):
@@ -44,12 +45,20 @@ class Agent(BaseAgent):
         tool_response = self.tools_map[name](**args)
         elapsed_time = round(time.time() - start_time, 4)
         self.messages.tool_call_response(tool_response, tool_call, elapsed_time)
+        self.workflow.add_node(WorkflowStep(
+            op_type="TOOL",
+            tool_name=name,
+            tool_args=args,
+            content=tool_response)
+        )
+        return tool_response
         
     def run(self, input):
         """
         Add the user input to the conversation history, then call chat_completion()
         """
         self.messages.user_input(input)
+        self.workflow.add_node(WorkflowStep(op_type="USER", content=input))
 
         while True:
 
@@ -59,6 +68,6 @@ class Agent(BaseAgent):
 
             # === handle tool calls ===
             for tool_call in message.tool_calls:
-                self.call_function(tool_call)
+                tool_response = self.call_function(tool_call)
 
         return message.content

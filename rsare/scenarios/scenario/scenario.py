@@ -1,5 +1,6 @@
 # rsare/scenarios/scenario/scenario.py
 
+from rsare.scenarios.scenario.workflow import Workflow
 
 class Scenario:
 
@@ -16,6 +17,7 @@ class Scenario:
         """
         self.scenario_id = scenario_id
         self.scenario_input = scenario_input
+        self.workflow = Workflow()
 
     def initiate_scenario(self):
         """
@@ -25,7 +27,7 @@ class Scenario:
         raise NotImplementedError(
             "initiate_scenario() must be implemented by subclasses.")
 
-    def oracle_solution(self):
+    def oracle_solution(self, run_oracle=False):
         """
         Logic that specifies the oracle solution for this task
         This logic is scenario specific, implemented by subclasses

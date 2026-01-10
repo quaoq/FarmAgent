@@ -3,8 +3,11 @@ from rsare.agents.llm.openai_llm import OpenAILLM
 from rsare.agents.agent.agent import Agent
 from rsare.engine.engine import Engine
 
-from rsare.apps.gma.database import SARTools
+from rsare.apps.gma.tools_list import SARTools
+# from rsare.apps.gma.database import SARTools # just debugging testing
 from rsare.scenarios.gma.scenario_1 import Scenario1
+from rsare.scenarios.gma.scenario_0 import Scenario0
+
 
 def main():
 
@@ -15,8 +18,7 @@ def main():
     sarTools = SARTools()
 
     # Scenario to run
-    scenario_input = "Get Sentinel-1 SAR scenes from 2018-08-01 to 2018-08-10 over Shanghai (i.e., 121.0, 30.0, 123.0, 32.0)!"
-    scenario = Scenario1(scenario_id=0, scenario_input=scenario_input, sarTools=sarTools)
+    scenario = Scenario1(sarTools=sarTools)
 
     # Agent
     agent = Agent(
@@ -29,7 +31,7 @@ def main():
     # Engine
     engine = Engine(agent, scenario)
     engine.run_scenario_oracle()
-    # engine.run_scenario_agent()
+    engine.run_scenario_agent()
 
 
 if __name__ == "__main__":

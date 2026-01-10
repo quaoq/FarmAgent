@@ -2,6 +2,7 @@
 
 import time
 from rsare.agents.agent.messages import Messages
+from rsare.scenarios.scenario.workflow import Workflow, WorkflowStep
 
 class BaseAgent:
     def __init__(self, name, llm, system_message=None, messages=None):
@@ -18,6 +19,7 @@ class BaseAgent:
         self.llm = llm
         self.system_message = system_message
         self.messages = messages if messages is not None else Messages(provider=llm.provider)
+        self.workflow = Workflow()
 
     def log(self, message):
         print(f"[{self.name}] {message}")
