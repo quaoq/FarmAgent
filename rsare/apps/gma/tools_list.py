@@ -30,6 +30,7 @@ class ProcessingStage(str, Enum):
     PREPROCESSED = "preprocessed"
     CFAR_VESSEL_DONE = "cfar_vessel_done"
     TILES_EXTRACTED = "tiles_extracted"
+    ENV_TILES_EXTRACTED = "env_tiles_extracted"
     PRESENCE_LENGTH_PREDICTED = "presence_length_predicted"
     FISHING_PREDICTED = "fishing_predicted"
     AIS_MATCHED = "ais_matched"
@@ -103,9 +104,7 @@ class VesselDetection:
     is_dark_vessel: bool = True  # ssvid is None
 
     # extract_vessel_detection_tiles
-    detection_tiles_extracted: bool = False
-    tiles_info: Optional[dict] = None
-
+    detection_tiles_path: Optional[str] = None  # Path to 80x80x2 SAR thumbnail
 
 @dataclass
 class InfrastructureDetection:
@@ -731,6 +730,38 @@ class SARTools:
         return scores
 
     @agent_tool
+    def extract_vessel_detection_tiles(
+            self,
+            tile_width: int = 80,
+            tile_height: int = 80,
+            tile_scale_m: float = 20.0,
+    ) -> str:
+        """
+        Extract SAR thumbnails (80x80x2 VH/VV) from detection points for vessel presence/length model.
+
+        In offline simulation, this marks tiles as extracted and sets paths.
+        In real implementation, this would export tiles from GEE to GCS.
+
+        Args:
+            tile_width: Width of tile in pixels (default: 80)
+            tile_height: Height of tile in pixels (default: 80)
+            tile_scale_m: Spatial resolution in meters per pixel (default: 20m)
+
+        Returns:
+            Status message with number of tiles extracted
+        """
+        if not self.state.has_stage(ProcessingStage.CFAR_VESSEL_DONE):
+            return "CFAR vessel detection must be completed first"
+
+        extracted_count = 0
+        for detection in self.state.vessel_detections.values():
+            detection.detection_tiles_path = f"gs://bucket/thumbnails/{detection.detect_id}_{tile_width}x{tile_height}.tif"
+            extracted_count += 1
+
+        self.state.mark_stage(ProcessingStage.TILES_EXTRACTED)
+        return f"Extracted {extracted_count} vessel detection tiles ({tile_width}x{tile_height}x2)"
+
+    @agent_tool
     def vessel_presence_length_estimation(self, tile_width: int = 80, tile_height: int = 80) -> str:
         """Estimate vessel presence probability and vessel length.
 
@@ -742,6 +773,8 @@ class SARTools:
         """
         if not self.state.has_stage(ProcessingStage.CFAR_VESSEL_DONE):
             return "CFAR vessel detection must be completed first"
+        if not self.state.has_stage(ProcessingStage.TILES_EXTRACTED):
+            return "Detection tiles must be extracted first"
 
         for detection in self.state.vessel_detections.values():
             detection.presence_prob = detection.presence_score if detection.presence_score is not None else 0.9
@@ -1315,6 +1348,46 @@ class SARTools:
         self.state.mark_stage(ProcessingStage.RASTER_STACKS_GENERATED)
         return f"Generated multiband raster stacks  with {len(multiband_rasters)} bands: {', '.join(multiband_rasters)}"
 
+    @agent_tool
+    def extract_environmental_tiles(
+            self,
+            tile_width: int = 100,
+            tile_height: int = 100,
+            presence_threshold: float = 0.7,
+    ) -> str:
+        """
+        Extract 11-channel environmental feature tiles (100x100x11) for fishing/non-fishing classification.
+
+        Only processes high-confidence detections (presence_prob > threshold).
+        In offline simulation, marks tiles as extracted.
+        In real implementation, samples from environmental rasters and stores to GCS.
+
+        Args:
+            tile_width: Width of tile in pixels (default: 100)
+            tile_height: Height of tile in pixels (default: 100)
+            presence_threshold: Minimum presence probability to process (default: 0.7)
+
+        Returns:
+            Status message with number of environmental tiles extracted
+        """
+        if not self.state.has_stage(ProcessingStage.PRESENCE_LENGTH_PREDICTED):
+            return "Vessel presence/length prediction must be completed first"
+        if not self.state.has_stage(ProcessingStage.RASTER_STACKS_GENERATED):
+            return "Multiband raster stacks must be generated first"
+
+        high_confidence_detections = self.state.get_high_confidence_detections(threshold=presence_threshold)
+        extracted_count = 0
+
+        for detection in high_confidence_detections:
+            # In simulation: mark as extracted, set path
+            # In real: would sample 11-channel raster stack and store to GCS
+            detection.env_tiles_extracted = True
+            detection.env_tiles_path = f"gs://bucket/feature_tiles/{detection.detect_id}_{detection.length_m:.1f}.tif"
+            extracted_count += 1
+
+        self.state.mark_stage(ProcessingStage.ENV_TILES_EXTRACTED)
+        return f"Extracted {extracted_count} environmental tiles ({tile_width}x{tile_height}x11) for high-confidence detections"
+
     # ========================================================================
     # Fishing Classification Methods
     # ========================================================================
@@ -1327,8 +1400,7 @@ class SARTools:
             multiband_rasters: List[str] = None,
     ) -> str:
         """
-        Classify vessels as fishing vs non-fishing using environmental rasters.
-
+        Classify vessels as fishing vs non-fishing using ConvNeXt model with environmental tiles.
 
         Args:
             tile_weidth: width in pixels for the environmental tiles (default: 100).
@@ -1343,17 +1415,27 @@ class SARTools:
             return "Vessel presence/length prediction must be completed first"
         if not self.state.has_stage(ProcessingStage.RASTER_STACKS_GENERATED):
             return "Multiband raster stacks must be generated first"
+        if not self.state.has_stage(ProcessingStage.ENV_TILES_EXTRACTED):
+            return "Environmental tiles must be extracted first"
 
-        # Only process high-confidence detections (presence_prob > 0.7)
-        high_confidence_detections = self.state.get_high_confidence_detections(threshold=0.7)
+        # Only process detections with extracted environmental tiles
+        processed_count = 0
+        for detection in self.state.vessel_detections.values():
+            if not detection.env_tiles_extracted:
+                continue
 
-        for detection in high_confidence_detections:
-            # Use fishing_score from CSV if available, otherwise default to 0.5
-            detection.fishing_prob = detection.fishing_score if detection.fishing_score is not None else 0.5
+            if detection.fishing_score is not None:
+                detection.fishing_prob = detection.fishing_score
+            else:
+                # Simulate: default to 0.5 if not available
+                detection.fishing_prob = 0.5
+
             detection.fishing_binary = detection.fishing_prob > 0.5
+            processed_count += 1
 
         self.state.mark_stage(ProcessingStage.FISHING_PREDICTED)
-        return f"Classified fishing/non-fishing for {len(high_confidence_detections)} high-confidence detections"
+        return f"Classified fishing/non-fishing for {processed_count} detections using {tile_weidth}x{tile_height} environmental tiles"
+
 
     @agent_tool
     def fishing_nonfishing_classification_hyperparameters(

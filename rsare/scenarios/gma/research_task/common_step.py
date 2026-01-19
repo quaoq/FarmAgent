@@ -14,8 +14,8 @@ def load_env_tiles(date_start, date_end, region, tools):
     print("  ✓ 环境数据加载完成")
     result1 = tools.generate_multiband_raster_stacks()
     print(f"✓ {result1}")
-    # result1 = tools.extract_environmental_tiles(tile_width=100, tile_height=100, presence_threshold=0.7)
-    # print(f"✓ {result1}")
+    result1 = tools.extract_environmental_tiles(tile_width=100, tile_height=100, presence_threshold=0.7)
+    print(f"✓ {result1}")
 
 
 def load_detect_tiles(date_start, date_end, region, tools):
@@ -45,5 +45,5 @@ def load_detect_tiles(date_start, date_end, region, tools):
         s1B_background_pixel_threshold=19.0,
     )
     print(f"✓ {result}")
-    # result = tools.extract_vessel_detection_tiles(tile_width=80, tile_height=80, tile_scale_m=20.0)
-    # print(f"✓ {result}")
+    result = tools.extract_vessel_detection_tiles(tile_width=80, tile_height=80, tile_scale_m=20.0)
+    print(f"✓ {result}")

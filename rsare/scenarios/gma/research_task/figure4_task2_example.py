@@ -98,8 +98,8 @@ def run_figure4_task2_example():
         s1B_background_pixel_threshold=19.0,
     )
     print(f"✓ {result}")
-    # result = tools.extract_vessel_detection_tiles(tile_width=80, tile_height=80, tile_scale_m=20.0)
-    # print(f"✓ {result}")
+    result = tools.extract_vessel_detection_tiles(tile_width=80, tile_height=80, tile_scale_m=20.0)
+    print(f"✓ {result}")
     result = tools.vessel_presence_length_estimation(tile_width=80, tile_height=80)
     print(f"✓ {result}")
     # ========================================================================
