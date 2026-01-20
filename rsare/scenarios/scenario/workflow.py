@@ -47,8 +47,6 @@ class Workflow:
     def __len__(self):
         return len(self.dag)
 
-    # def __str__(self):
-    #     return f"{self.dag}"
     
     def to_dict(self):
         return {
@@ -62,3 +60,7 @@ class Workflow:
     def add_node(self, node: WorkflowStep):
         name = node.name if node.name else f"step{len(self.dag)}"
         self.dag[name] = node
+
+    def save_workflow(self, filename):
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)

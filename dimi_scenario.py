@@ -31,7 +31,14 @@ def main():
     # Engine
     engine = Engine(agent, scenario)
     engine.run_scenario_oracle()
+    engine.scenario.workflow.save_workflow("workflow_oracle.tmp.json")
     engine.run_scenario_agent()
+    engine.agent.workflow.save_workflow("workflow_agent.tmp.json")
+
+    # two DAGs @Ao: TODO!
+    # oracle_workflow = engine.scenario.workflow
+    # agent_workflow = engine.agent.workflow
+    # _ = path_correctness(oracle_workflow, agent_workflow)
 
 
 if __name__ == "__main__":

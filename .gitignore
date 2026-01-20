@@ -189,3 +189,4 @@ data.zip
 output
 output/**.geojson
 **.test.py
+**.tmp.json
