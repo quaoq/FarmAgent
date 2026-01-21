@@ -56,7 +56,7 @@ def run_figure1_task1_example():
     load_env_tiles(date_start, date_end,region, tools)
     # D.10: 捕鱼/非捕鱼分类（ConvNeXt模型）
     result = tools.fishing_nonfishing_classification(
-        tile_weidth=100,
+        tile_width=100,
         tile_height=100,
     )
     print(f"✓ {result}")
@@ -81,14 +81,14 @@ def run_figure1_task1_example():
     print("-" * 80)
     
     # F.1: 按网格聚合公开可追踪活动（tracked = matched vessels）
-    # result = tools.aggregate_detections_by_grid(
-    #     date_start="2018-08-01",
-    #     date_end="2018-08-31",
-    #     scale_deg=0.1,  # 论文Methods中使用的0.1度网格
-    #     activity_type="tracked",  # 只统计匹配的船舶（公开可追踪）
-    #     normalize_by_overpasses=True,  # 按过境次数归一化
-    # )
-    # print(f"✓ {result}")
+    result = tools.aggregate_detections_by_grid(
+        date_start="2018-08-01",
+        date_end="2018-08-31",
+        scale_deg=0.1,  # 论文Methods中使用的0.1度网格
+        activity_type="tracked",  # 只统计匹配的船舶（公开可追踪）
+        normalize_by_overpasses=True,  # 按过境次数归一化
+    )
+    print(f"✓ {result}")
     
     # ========================================================================
     # 阶段G：识别最密集和最稀疏区域

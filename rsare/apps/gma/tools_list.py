@@ -1395,7 +1395,7 @@ class SARTools:
     @agent_tool
     def fishing_nonfishing_classification(
             self,
-            tile_weidth: int = 100,
+            tile_width: int = 100,
             tile_height: int = 100,
             multiband_rasters: List[str] = None,
     ) -> str:
@@ -1403,7 +1403,7 @@ class SARTools:
         Classify vessels as fishing vs non-fishing using ConvNeXt model with environmental tiles.
 
         Args:
-            tile_weidth: width in pixels for the environmental tiles (default: 100).
+            tile_width: width in pixels for the environmental tiles (default: 100).
             tile_height: height in pixels for the environmental tiles (default: 100).
             multiband_rasters: List of raster bands used (kept for API consistency).
                               Should match the bands in generate_multiband_raster_stacks.
@@ -1434,13 +1434,13 @@ class SARTools:
             processed_count += 1
 
         self.state.mark_stage(ProcessingStage.FISHING_PREDICTED)
-        return f"Classified fishing/non-fishing for {processed_count} detections using {tile_weidth}x{tile_height} environmental tiles"
+        return f"Classified fishing/non-fishing for {processed_count} detections using {tile_width}x{tile_height} environmental tiles"
 
 
     @agent_tool
     def fishing_nonfishing_classification_hyperparameters(
             self,
-            tile_weidth: int = 100,
+            tile_width: int = 100,
             tile_height: int = 100,
             multiband_rasters: List[str] = None,
     ) -> dict:
@@ -1448,7 +1448,7 @@ class SARTools:
         Evaluate hyperparameters for fishing/non-fishing classification.
 
         Args:
-            tile_weidth: width in pixels for the environmental tiles.
+            tile_width: width in pixels for the environmental tiles.
             tile_height: height in pixels for the environmental tiles.
             multiband_rasters: List of raster band identifiers to include.
                              If None, defaults to all standard bands.
@@ -1463,7 +1463,7 @@ class SARTools:
                 - `f1_score`
                 - `is_optimal`
         """
-        tile_size = (tile_weidth, tile_height)
+        tile_size = (tile_width, tile_height)
         if multiband_rasters is None:
             multiband_rasters = [
                 "sar_cfar", "sar_vessel_length", "bathymetry",
@@ -1633,3 +1633,107 @@ class SARTools:
         }
 
         return scores
+
+    @agent_tool
+    def aggregate_detections_by_grid(
+            self,
+            date_start: str,
+            date_end: str,
+            scale_deg: float = 0.1,
+            activity_type: str = "tracked",  # "tracked", "dark", "fishing", "nonfishing", "all"
+            normalize_by_overpasses: bool = True,
+    ) -> str:
+        """
+        Aggregate vessel detections into spatial grid cells for density analysis.
+
+        Used for Figure 1 tasks: identifying dense/sparse regions.
+
+        Args:
+            date_start: Start date (YYYY-MM-DD)
+            date_end: End date (YYYY-MM-DD)
+            scale_deg: Grid cell size in degrees (default: 0.1, as per paper Methods)
+            activity_type: Type of activity to aggregate:
+                - "tracked": Only matched detections (bright vessels)
+                - "dark": Only unmatched detections
+                - "fishing": Fishing vessels (based on fishing_prob)
+                - "nonfishing": Non-fishing vessels
+                - "all": All detections
+            normalize_by_overpasses: Whether to normalize by overpasses_2017_2021 (default: True)
+
+        Returns:
+            Status message with aggregation results stored in state.tiles_info
+        """
+        if not self.state.has_stage(ProcessingStage.SCENES_LOADED):
+            return "Please load SAR scenes first"
+
+        date_start_obj = pd.to_datetime(date_start).date()
+        date_end_obj = pd.to_datetime(date_end).date()
+
+        rows = []
+        for det in self.state.vessel_detections.values():
+            if det.detect_timestamp is None:
+                continue
+            det_date = det.detect_timestamp.date()
+            if not (date_start_obj <= det_date <= date_end_obj):
+                continue
+
+            # Filter by activity type
+            if activity_type == "tracked":
+                if det.mmsi is None or not det.is_bright_vessel:
+                    continue
+            elif activity_type == "dark":
+                if det.mmsi is not None or det.is_bright_vessel:
+                    continue
+            elif activity_type == "fishing":
+                if det.fishing_prob is None or det.fishing_prob <= 0.5:
+                    continue
+            elif activity_type == "nonfishing":
+                if det.fishing_prob is None or det.fishing_prob > 0.5:
+                    continue
+            # "all" includes everything
+
+            # Weight: normalize by overpasses if available
+            weight = 1.0
+            # if normalize_by_overpasses and det.overpasses_2017_2021:
+            #     if det.overpasses_2017_2021 > 0:
+            #         weight = 1.0 / det.overpasses_2017_2021
+
+            rows.append((det.detect_lon, det.detect_lat, weight))
+
+        if not rows:
+            return f"No detections found for {activity_type} activity in {date_start} to {date_end}"
+
+        # Aggregate to grid
+        data = pd.DataFrame(rows, columns=["lon", "lat", "weight"])
+        data["lon_idx"] = np.floor(data["lon"] * (1.0 / scale_deg)).astype(int)
+        data["lat_idx"] = np.floor(data["lat"] * (1.0 / scale_deg)).astype(int)
+
+        grid = (
+            data.groupby(["lat_idx", "lon_idx"])["weight"]
+            .sum()
+            .reset_index(name="activity_density")
+        )
+
+        # Calculate cell area (km²) for density normalization
+        grid["lat_center"] = (grid["lat_idx"] + 0.5) * scale_deg
+        grid["cell_area_km2"] = (
+                111.0 * 111.0 * scale_deg * scale_deg *
+                np.cos(np.deg2rad(grid["lat_center"]))
+        )
+        grid["density_km2"] = grid["activity_density"] / grid["cell_area_km2"]
+
+        # Store results
+        if self.state.tiles_info is None:
+            self.state.tiles_info = {}
+
+        key = f"grid_{activity_type}_{date_start}_{date_end}"
+        self.state.tiles_info[key] = {
+            "grid": grid,
+            "scale_deg": scale_deg,
+            "activity_type": activity_type,
+            "date_range": (date_start, date_end),
+            "n_cells": len(grid),
+            "total_activity": grid["activity_density"].sum(),
+        }
+
+        return f"Aggregated {len(grid)} grid cells for {activity_type} activity ({date_start} to {date_end})"

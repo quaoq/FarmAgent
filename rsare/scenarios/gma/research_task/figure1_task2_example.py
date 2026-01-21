@@ -34,7 +34,7 @@ def run_figure1_task2_example():
 
     load_env_tiles(date_start, date_end, region, tools)
 
-    result1 = tools.fishing_nonfishing_classification(tile_weidth=100, tile_height=100)
+    result1 = tools.fishing_nonfishing_classification(tile_width=100, tile_height=100)
     print(f"✓ {result1}")
     # 阶段E：EEZ空间关联
     # result1 = tools.load_eez_data()

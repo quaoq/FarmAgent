@@ -36,7 +36,7 @@ def run_figure3_task1_example():
     
     load_env_tiles(date_start=date_start, date_end=date_end, region=region, tools=tools)
     
-    result = tools.fishing_nonfishing_classification(tile_weidth=100, tile_height=100)
+    result = tools.fishing_nonfishing_classification(tile_width=100, tile_height=100)
     print(f"✓ {result}")
     
     # result = tools.load_eez_data()

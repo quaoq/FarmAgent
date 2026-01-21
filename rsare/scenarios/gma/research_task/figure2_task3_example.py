@@ -40,7 +40,7 @@ def run_figure2_task3_example():
     for region in regions:
         load_env_tiles(date_end, date_start, region, tools)
 
-    result1 = tools.fishing_nonfishing_classification(tile_weidth=100, tile_height=100)
+    result1 = tools.fishing_nonfishing_classification(tile_width=100, tile_height=100)
     print(f"✓ {result1}")
 
     # 阶段E：EEZ空间关联

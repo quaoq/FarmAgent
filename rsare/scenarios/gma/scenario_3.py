@@ -193,7 +193,7 @@ class Scenario3(Scenario):
             depends_on=["step6", "step7", "step8", "step9", "step10", "step11", "step12"]
         )
         self.workflow.add_node(step13)
-        args14 = {'tile_weidth': 100,
+        args14 = {'tile_width': 100,
             'tile_height':100,
             'multiband_rasters':["sar_cfar", "sar_vessel_length", "bathymetry",
                               "distance_from_port", "AIS_vessel_activity",

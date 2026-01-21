@@ -6,6 +6,7 @@ from rsare.apps.gma.tools_list import SARTools
 # from rsare.apps.gma.database import SARTools # just debugging testing
 from rsare.scenarios.gma.scenario_1 import Scenario1
 from rsare.scenarios.gma.scenario_0 import Scenario0
+from rsare.scenarios.gma.scenario_figure1_task1 import ScenarioFigure1Task1
 from rsare.scenarios.scenario.workflow import Workflow
 from rsare.validation.dfa_processor import generate_alphabet, generate_dfa, simplify_and_mark
 from rsare.validation.metrics import path_correctness
@@ -20,7 +21,7 @@ def main():
     sarTools = SARTools()
 
     # Scenario to run
-    scenario = Scenario1(sarTools=sarTools)
+    scenario = ScenarioFigure1Task1(sarTools=sarTools)
 
     # Agent
     agent = Agent(
@@ -32,16 +33,16 @@ def main():
 
     # Engine
     engine = Engine(agent, scenario)
-    # engine.run_scenario_oracle()
-    # engine.scenario.workflow.save_workflow("workflow_oracle.tmp.json")
-    # engine.run_scenario_agent()
-    # engine.agent.workflow.save_workflow("workflow_agent.tmp.json")
-    # oracle_workflow = engine.scenario.workflow
-    # agent_workflow = engine.agent.workflow
-    oracle_workflow = Workflow.load_workflow("workflow_oracle.tmp.json")
-    agent_workflow = Workflow.load_workflow("workflow_agent.tmp.json")
 
-    # two DAGs @Ao: TODO!
+    engine.run_scenario_oracle()
+    engine.scenario.workflow.save_workflow("workflow_oracle.f1t1.json")
+    engine.run_scenario_agent()
+    engine.agent.workflow.save_workflow("workflow_agent.f1t1.json")
+    oracle_workflow = engine.scenario.workflow
+    agent_workflow = engine.agent.workflow
+
+    # oracle_workflow = Workflow.load_workflow("workflow_oracle.f1t1.json")
+    # agent_workflow = Workflow.load_workflow("workflow_agent.f1t1.json")
 
     result = evaluate(oracle_workflow, agent_workflow, engine.agent.tool_schemas)
     print(f"Path Correctness: {result}", flush=True)
