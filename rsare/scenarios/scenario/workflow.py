@@ -47,7 +47,6 @@ class Workflow:
     def __len__(self):
         return len(self.dag)
 
-    
     def to_dict(self):
         return {
             step_name: step.to_dict()
@@ -64,3 +63,27 @@ class Workflow:
     def save_workflow(self, filename):
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
+
+    @classmethod
+    def load_workflow(cls, filename):
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        workflow = cls()
+
+        # data is expected to be a dict: {step_name: step_dict, ...}
+        for step_name, step_dict in data.items():
+            # Ensure the internal name matches the key
+            step_dict = dict(step_dict)  # shallow copy to avoid mutating original
+            step_dict["name"] = step_name
+            node = WorkflowStep(
+                name=step_dict.get("name"),
+                content=step_dict.get("content"),
+                op_type=step_dict.get("op_type"),
+                tool_name=step_dict.get("tool_name"),
+                tool_args=step_dict.get("tool_args"),
+                depends_on=step_dict.get("depends_on", []),
+            )
+            workflow.add_node(node)
+
+        return workflow

@@ -25,7 +25,7 @@ class Scenario1(Scenario):
     def initiate_scenario(self):
         pass
 
-    def oracle_solution(self, run_oracle=False):
+    def oracle_solution(self, run_oracle=True):
         date1 = '2018-08-08'
         date2 = '2018-08-10'
         region = [121.0, 30.0, 123.0, 32.0]
@@ -67,7 +67,7 @@ class Scenario1(Scenario):
             op_type="READ",
             tool_name="load_global_shoreline_data",
             tool_args=args3,
-            depends_on=[]
+            depends_on=["step2"]
         )
         self.workflow.add_node(step3)
 
@@ -80,7 +80,7 @@ class Scenario1(Scenario):
             op_type="WRITE",
             tool_name="filter_shoreline_regions_sar_scenes",
             tool_args=args4,
-            depends_on=["step2", "step3"]
+            depends_on=["step3"]
         )
         self.workflow.add_node(step4)
 
@@ -100,28 +100,31 @@ class Scenario1(Scenario):
         )
         self.workflow.add_node(step5)
 
-        args6 = {'tile_width': 80, 'tile_height': 80}
+        args6 = {'tile_width': 80, 'tile_height': 80, 'tile_scale_m': 20.0}
         if run_oracle:
-            response6 = self.sarTools.vessel_presence_length_estimation(**args6)
+            response6 = self.sarTools.extract_vessel_detection_tiles(**args6)
             print(response6)
         step6 = WorkflowStep(
             name="step6",
             op_type="WRITE",
-            tool_name="vessel_presence_length_estimation",
+            tool_name="extract_vessel_detection_tiles",
             tool_args=args6,
             depends_on=["step5"]
         )
         self.workflow.add_node(step6)
 
-    @agent_tool
-    def check_loaded_images(self):
-        """
-        Check if SAR scenes are loaded
-
-        Returns:
-            Message confirming whether SAR scenes are loaded or not
-        """
-        return "SAR scenes are not loaded"
+        args7 = {'tile_width': 80, 'tile_height': 80}
+        if run_oracle:
+            response7 = self.sarTools.vessel_presence_length_estimation(**args7)
+            print(response7)
+        step7 = WorkflowStep(
+            name="step7",
+            op_type="WRITE",
+            tool_name="vessel_presence_length_estimation",
+            tool_args=args7,
+            depends_on=["step6"]
+        )
+        self.workflow.add_node(step7)
 
 
 if __name__ == "__main__":
