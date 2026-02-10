@@ -33,11 +33,12 @@ def main():
 
     # Engine
     engine = Engine(agent, scenario)
+    engine.run_scenario_dynamic()
+    engine.agent.workflow.save_workflow("workflow_agent.f1t1.json")
 
     engine.run_scenario_oracle()
     engine.scenario.workflow.save_workflow("workflow_oracle.f1t1.json")
-    engine.run_scenario_agent()
-    engine.agent.workflow.save_workflow("workflow_agent.f1t1.json")
+
     oracle_workflow = engine.scenario.workflow
     agent_workflow = engine.agent.workflow
 

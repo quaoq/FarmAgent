@@ -1,3 +1,7 @@
+import time
+
+from rsare.engine.event import Event
+
 SCENARIO_INPUT = """
 Identify the regions with the highest and lowest densities of "publicly trackable vessel activities" in global ocean areas during August 2018.
 
@@ -16,14 +20,22 @@ from rsare.scenarios.scenario.scenario import Scenario
 from rsare.scenarios.scenario.workflow import WorkflowStep
 
 
+class EarthQuakeEvent(Event):
+    def step(self):
+        return f"An earthquake has occurred at time {self.time_start}!"
+
+
 class ScenarioFigure1Task1(Scenario):
 
     def __init__(self, scenario_id=None, scenario_input=None, sarTools=None):
+
         if scenario_id is None:
             scenario_id = 5
         if scenario_input is None:
             scenario_input = SCENARIO_INPUT
-        super().__init__(scenario_id, scenario_input)
+        start_time = time.time()
+        event = EarthQuakeEvent(time_start=start_time + 2, time_duration=30)
+        super().__init__(scenario_id, scenario_input, dynamic_events=[event], start_time=start_time)
         self.sarTools = sarTools
 
     def initiate_scenario(self):

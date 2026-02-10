@@ -49,7 +49,8 @@ class Agent(BaseAgent):
             op_type="TOOL",
             tool_name=name,
             tool_args=args,
-            content=tool_response)
+            content=tool_response,
+            time=self.time_manager.time())
         )
         return tool_response
         
@@ -58,7 +59,7 @@ class Agent(BaseAgent):
         Add the user input to the conversation history, then call chat_completion()
         """
         self.messages.user_input(input)
-        self.workflow.add_node(WorkflowStep(op_type="USER", content=input))
+        self.workflow.add_node(WorkflowStep(op_type="USER", content=input,time=self.time_manager.time()))
 
         while True:
 

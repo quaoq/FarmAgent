@@ -10,7 +10,8 @@ class WorkflowStep:
             op_type = None,
             tool_name = None,
             tool_args = None,
-            depends_on = []):
+            depends_on = [],
+            time = None):
         """
         Initialize the base Workflow class.
         """
@@ -20,6 +21,7 @@ class WorkflowStep:
         self.tool_name = tool_name # tool function if tool step
         self.tool_args = tool_args # Dict
         self.depends_on = depends_on # List (names of parent nodes)
+        self.time = time
 
     def to_dict(self):
         return {

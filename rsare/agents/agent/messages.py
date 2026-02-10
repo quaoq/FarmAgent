@@ -13,7 +13,10 @@ class Messages:
             self.messages.append({"role": "system", "content": system_message}) 
 
     def user_input(self, input):
-        self.messages.append({"role": "user", "content": input}) 
+        self.messages.append({"role": "user", "content": input})
+
+    def system_notify(self, input):
+        self.messages.append({"role": "user", "content": input})
 
     def llm_response(self, response, elapsed_time):
 

@@ -19,6 +19,7 @@ class BaseAgent:
         self.llm = llm
         self.system_message = system_message
         self.messages = messages if messages is not None else Messages(provider=llm.provider)
+        self.time_manager = None
         self.workflow = Workflow()
 
     def log(self, message):
@@ -37,7 +38,11 @@ class BaseAgent:
             dict: A dictionary containing the model's response, input tokens, output tokens, etc.
         """
         start_time = time.time()
+        print(f"messages passed to chat_completion: {messages}")
         response = self.llm.chat_completion(messages, tools)
         elapsed_time = round(time.time() - start_time, 4)
         self.messages.llm_response(response, elapsed_time)
         return response.choices[0].message
+
+    def set_time_manager(self, time_manager):
+        self.time_manager = time_manager
