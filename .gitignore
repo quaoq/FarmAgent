@@ -190,3 +190,14 @@ output
 output/**.geojson
 **.test.py
 **.tmp.json
+**.pdf
+
+# RS-ARE dev
+**/debugdev/
+**/debugdev/**
+
+# RS-ARE results
+workflows
+workflows/**.json
+**/.faiss_index
+**/.faiss_index/**

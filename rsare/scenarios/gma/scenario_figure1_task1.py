@@ -51,7 +51,7 @@ class ScenarioFigure1Task1(Scenario):
         # 阶段A：加载SAR场景和CFAR检测
         # ========================================================================
         # step 1: load_SAR_scenes
-        args1 = {'date1': date1, 'date2': date2, 'region': region, 'satellite': 'S1AB'}
+        args1 = {'date1': date1, 'date2': date2, 'region': region, 'satellite': 'S1AB', 'collection': "COPERNICUS/S1_GRD"}
         if run_oracle:
             response1 = self.sarTools.load_SAR_scenes(**args1)
             print(response1)

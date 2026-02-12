@@ -1,0 +1,14 @@
+# LLM packages
+openai
+openai-agents
+
+# RAG tools
+langchain
+langchain-openai
+langchain-community
+faiss-cpu
+
+# Misc tools
+numpy
+pypdf
+pandas

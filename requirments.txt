@@ -1,4 +1,0 @@
-openai
-openai-agents
-numpy
-pandas
