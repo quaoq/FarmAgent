@@ -1,0 +1,42 @@
+{
+  "skill_id": "sar_imagery_sentinel1_grd_iw_vh_vv",
+  "title": "Load and pre-process Sentinel-1 GRD IW dual-pol SAR scenes (VH+VV) with border clipping",
+  "keywords": ["Sentinel-1", "SAR", "GRD", "IW", "VH", "VV", "GEE", "thermal noise removal", "radiometric calibration", "terrain correction", "500m border buffer"],
+  "description": "Use Copernicus Sentinel-1 GRD Level-1 IW dual-polarization (VH and VV) SAR imagery. Use the Google Earth Engine-provided COPERNICUS/S1_GRD collection processed for thermal noise removal, radiometric calibration, and terrain correction. To reduce noise artefacts that can introduce false detections, clip a 500 m buffer off image borders before downstream detection workflows.",
+  "inputs": {
+    "date1": "YYYY-MM-DD",
+    "date2": "YYYY-MM-DD",
+    "region": "[min_lon, min_lat, max_lon, max_lat]",
+    "satellite": "S1A|S1B|S1AB",
+    "collection": "COPERNICUS/S1_GRD"
+  },
+  "outputs": {
+    "sar_scenes": "Collection of pre-processed Sentinel-1 scenes (VH,VV) with borders clipped"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "load_SAR_scenes",
+      "tool_args": {
+        "date1": "YYYY-MM-DD",
+        "date2": "YYYY-MM-DD",
+        "region": [-180.0, -90.0, 180.0, 90.0],
+        "satellite": "S1AB",
+        "collection": "COPERNICUS/S1_GRD"
+      },
+      "depends_on": []
+    },
+    "step2": {
+      "name": "step2",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "clip_SAR_scenes",
+      "tool_args": {
+        "clip_buffer": 500.0
+      },
+      "depends_on": ["step1"]
+    }
+  }
+}

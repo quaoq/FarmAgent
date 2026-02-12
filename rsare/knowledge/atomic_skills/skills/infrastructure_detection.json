@@ -1,0 +1,43 @@
+{
+  "skill_id": "infrastructure_detection_monthly_6mo_median_cfar",
+  "title": "Detect stationary offshore infrastructure using monthly 6-month median SAR composites + CFAR",
+  "keywords": ["infrastructure", "stationary objects", "median composite", "6-month", "monthly time series", "CFAR", "inner window 140", "outer window 200"],
+  "description": "Detect offshore infrastructure using the same two-parameter CFAR method as vessel detection but with two modifications: (1) construct median composites from SAR images within a 6-month time window to suppress non-stationary objects (most vessels) and enhance stationary objects; repeat monthly to produce a time series of composites; (2) use reduced spatial windows to reduce contamination from dense clusters of structures (e.g., wind farms). The paper reports inner window 140×140 pixels and outer window 200×200 pixels as effective.",
+  "inputs": {
+    "sar_scenes": "Sentinel-1 SAR collection (VH,VV)",
+    "composite_window": "6 months",
+    "composite_stride": "monthly",
+    "inner_window": [140, 140],
+    "outer_window": [200, 200]
+  },
+  "outputs": {
+    "infrastructure_candidates": "Stationary object detections from composites"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "generate_median_scene_composites",
+      "tool_args": {
+        "time_window_duration": "6 months",
+        "stride": "1 month",
+        "bands": ["VH", "VV"]
+      },
+      "depends_on": []
+    },
+    "step2": {
+      "name": "step2",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "infrastructure_CFAR_detection",
+      "tool_args": {
+        "inner_window_width": 140,
+        "inner_window_height": 140,
+        "outer_window_width": 200,
+        "outer_window_height": 200
+      },
+      "depends_on": ["step1"]
+    }
+  }
+}

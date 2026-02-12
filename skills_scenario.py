@@ -14,32 +14,20 @@ from rsare.validation.utils.utils import extract_tool_names, parse_agent_output,
 
 # KPOOL functions
 from rsare.knowledge.utils import extract_pdf_text
-from rsare.knowledge.rag.rag_pdf import RAG_PDF
+from rsare.knowledge.atomic_skills.skills_retriever import SkillIndex
 
 # other packs
 from pathlib import Path
 
-SCENARIO_INPUT_FULLDOC = """
-Identify the regions with the highest and lowest densities of 
-"publicly trackable vessel activities" in global ocean areas during August 2018 with S1A data.
-Detect vessels via CFAR detection, and match with AIS data to identify publicly trackable vessels.
 
-You are given the following document. This is a technical report that details all the steps
-required to carry out the aforementioned task. Please review and select the appropriate tools.
-
-TECHNICAL REPORT:
-
-"""
-
-
-SCENARIO_INPUT_RAG = """
+SCENARIO_INPUT_SKILLS = """
 Identify the regions with the highest and lowest densities of 
 "publicly trackable vessel activities" in global ocean areas during August 2018 with S1A data.
 Detect vessels via CFAR detection, and match with AIS data to identify publicly trackable vessels.
 
 """
 
-SCENARIO_INPUT_RAG_PREFIX = """
+SCENARIO_INPUT_SKILLS_PREFIX = """
 You are given the following pointers. These are snippets from a technical report that details 
 any steps required to carry out the aforementioned task. Please review and select the appropriate tools.
 
@@ -47,55 +35,21 @@ Hints:
 
 """
 
-SCENARIO_INPUT_QUESTION_ONLY = """
-Identify the regions with the highest and lowest densities of 
-"publicly trackable vessel activities" in global ocean areas during August 2018 with S1A data.
-Detect vessels via CFAR detection, and match with AIS data to identify publicly trackable vessels.
-"""
-
-
-SCENARIO_INPUT_OG = """
-Identify the regions with the highest and lowest densities of "publicly trackable vessel activities" in global ocean areas during August 2018.
-
-Using Sentinel-1 GRD SAR imagery from the S1A and S1B satellites, covering the global ocean region and the period from 2018-08-01 to 2018-08-31, load all available SAR scenes and clip a 500-m border buffer to remove edge artefacts.
-
-Detect vessels using the VH polarization band with a two-parameter CFAR configuration, applying a 200 × 200-pixel inner window and a 600 × 600-pixel outer window. Set the detection threshold to 16 for S1A scenes and 19 for S1B scenes.
-
-For each CFAR detection, extract an 80 × 80-pixel dual-polarization (VH + VV) SAR tile. Apply a pre-trained neural network to confirm vessel presence, filter out false detections, and estimate vessel length.
-
-Match detected vessels with AIS data to identify publicly trackable vessels. Load environmental data including bathymetry, port distances, surface temperature, current speed, and chlorophyll. Extract environmental tiles and apply fishing/non-fishing classification.
-
-Aggregate detected vessels by grid cells with 0.1-degree resolution, normalize by overpasses, and identify the regions with highest and lowest densities of tracked vessel activities.
-"""
-
 
 def main():
 
     # args
     outfile_oracle = "./workflows/workflow_oracle.f1t1.json"
-    
-    # Case I: Question only
-    outfile_agent = "./workflows/workflow_agent.f1t1_Q.json"
-    
-    # Case II: Full-document
-    outfile_agent = "./workflows/workflow_agent.f1t1_FD.json"
-    document_text = extract_pdf_text("./rsare/knowledge/rag/paper-methods.pdf")
-    # SCENARIO_INPUT = SCENARIO_INPUT_FULLDOC + document_text
-    print(document_text)
-    exit()
+        
+    outfile_agent = "./workflows/workflow_agent.f1t1_SKILLS.json"
+    skills_index = SkillIndex(Path("./rsare/knowledge/atomic_skills/skills/"))
+    SKILLS_TXT = skills_index.search_text(query=SCENARIO_INPUT_SKILLS, k=10)
 
-    # Case III: RAG
-    outfile_agent = "./workflows/workflow_agent.f1t1_RAG.json"
-    rag_pdf = RAG_PDF(Path("./rsare/knowledge/rag/"))
-    _RAG_INPUT = rag_pdf.rag_search(query=SCENARIO_INPUT_RAG, k = 10)
-    SCENARIO_INPUT = SCENARIO_INPUT_RAG + SCENARIO_INPUT_RAG_PREFIX + _RAG_INPUT
-    print(_RAG_INPUT)
-    exit()
-
-    # # Case 0: The original version
-    # outfile_agent = "./workflows/workflow_agent.f1t1_og.json"
-    # outfile_agent = "./workflows/workflow_agent.f1t1_og_gpt5.json"    
-    # SCENARIO_INPUT = SCENARIO_INPUT_OG
+    SCENARIO_INPUT = (
+        SCENARIO_INPUT_SKILLS
+        + SCENARIO_INPUT_SKILLS_PREFIX
+        + SKILLS_TXT
+    )
 
     # LLM
     gpt_model = "gpt-5-nano" # "gpt-4o-mini"
@@ -122,9 +76,9 @@ def main():
     # engine.scenario.workflow.save_workflow(outfile_oracle)
     # oracle_workflow = engine.scenario.workflow
     
-    # engine.run_scenario_agent()
-    # engine.agent.workflow.save_workflow(outfile_agent)
-    # agent_workflow = engine.agent.workflow
+    engine.run_scenario_agent()
+    engine.agent.workflow.save_workflow(outfile_agent)
+    agent_workflow = engine.agent.workflow
 
     oracle_workflow = Workflow.load_workflow(outfile_oracle)
     agent_workflow = Workflow.load_workflow(outfile_agent)

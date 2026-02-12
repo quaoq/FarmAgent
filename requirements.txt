@@ -8,6 +8,9 @@ langchain-openai
 langchain-community
 faiss-cpu
 
+# Atomic skills tools
+sentence-transformers
+
 # Misc tools
 numpy
 pypdf

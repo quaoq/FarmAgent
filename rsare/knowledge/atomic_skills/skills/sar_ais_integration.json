@@ -1,0 +1,28 @@
+{
+  "skill_id": "sar_ais_integration_probability_raster_matching",
+  "title": "Match SAR detections to AIS using probability rasters + length/recall adjustments and score threshold",
+  "keywords": ["SAR-AIS matching", "probability rasters", "utilization distribution", "length match", "recall", "iterative assignment", "threshold 7.4e-06"],
+  "description": "Match SAR detections to AIS tracks by computing a probability distribution of vessel location at acquisition time from AIS positions before/after the image, using precomputed probability rasters by vessel class, speed, and time interval. Evaluate probability at each detection and adjust using (1) detection likelihood term based on recall as a function of vessel length and spacing, and (2) length-consistency term comparing AIS known length and SAR estimated length. Compute a score matrix for candidate matches and assign matches iteratively (select best available match and remove) to outperform simple interpolation methods. Select a match acceptance threshold calibrated to global expected matches; paper uses 7.4×10^-6.",
+  "inputs": {
+    "confirmed_vessels": "SAR detections with estimated length",
+    "ais_tracks": "AIS positions near acquisition time",
+    "recall_model": "Recall(length, spacing)",
+    "length_lookup": "AIS vs SAR length difference table",
+    "score_threshold": 7.4e-06
+  },
+  "outputs": {
+    "matched_vessels": "Detections labeled as AIS-matched (bright) vs not matched (dark) with match metadata"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "sar_ais_matching",
+      "tool_args": {
+        "matching_score_threshold": 7.4e-06
+      },
+      "depends_on": []
+    }
+  }
+}

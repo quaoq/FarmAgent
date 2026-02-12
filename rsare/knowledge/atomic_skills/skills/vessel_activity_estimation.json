@@ -1,0 +1,17 @@
+{
+  "skill_id": "vessel_activity_estimation_grid_normalize_overpasses_rolling",
+  "title": "Estimate vessel activity by gridding detections and normalizing by SAR overpasses (rolling 24-day window)",
+  "keywords": ["vessel activity", "gridding", "1/200 degree", "normalize by overpasses", "24-day rolling window", "interpolation", "coverage threshold"],
+  "description": "Convert individual detections to average vessel activity by aggregating detections on a spatial grid at 1/200° (~550 m) resolution and normalizing each pixel by the number of satellite overpasses. Build a daily time series using a rolling 24-day window (two Sentinel-1 repeat cycles): aggregate detections within the window and assign to the center date. Restrict temporal analysis to pixels with at least 70 of 77 possible 24-day periods. For pixels with no overpass for 24 days, linearly interpolate the time series at that location.",
+  "inputs": {
+    "detections": "Filtered vessel detections (optionally by category: AIS-matched vs not)",
+    "overpasses": "Per-pixel count of SAR acquisitions",
+    "grid_resolution_deg": 0.005,
+    "rolling_window_days": 24
+  },
+  "outputs": {
+    "activity_grid": "Normalized activity grid per day (average vessels present)",
+    "activity_timeseries": "Daily time series per pixel or aggregated region"
+  },
+  "workflow": {}
+}

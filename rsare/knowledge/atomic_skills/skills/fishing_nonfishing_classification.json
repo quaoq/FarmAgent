@@ -1,0 +1,15 @@
+{
+  "skill_id": "fishing_nonfishing_classification_convnext_envstack_length",
+  "title": "Classify vessels as fishing vs non-fishing using environmental context tiles + vessel length",
+  "keywords": ["fishing classification", "non-fishing", "ConvNeXt", "environmental rasters", "11-band", "100x100", "0.01deg", "vessel length"],
+  "description": "Classify detected vessels as fishing or non-fishing using a multi-input mixed-data model (ConvNeXt-based). Inputs are (1) estimated vessel length from SAR (scalar) and (2) a multiband raster stack (11 bands) centered on the vessel, sampled as 100×100 tiles from 0.01° gridded fields (~1 km/pixel). The paper lists the 11 variables: vessel density (SAR), average vessel length (SAR), bathymetry, distance from port, hours of non-fishing AIS presence (<50 m), hours of non-fishing AIS presence (>50 m), average surface temperature, average current speed, std dev daily temperature, std dev daily current speed, average chlorophyll. Predictions use an ensemble of two models trained on spatially non-overlapping 'odd' and 'even' 1° grids; scores are calibrated using different fishing/non-fishing ratios.",
+  "inputs": {
+    "confirmed_vessels": "Detections with estimated vessel length",
+    "environmental_rasters": "Gridded fields at 0.01° resolution",
+    "tile_size_px": [100, 100]
+  },
+  "outputs": {
+    "vessel_activity_type": "Fishing/non-fishing labels or probabilities for each detection"
+  },
+  "workflow": {}
+}

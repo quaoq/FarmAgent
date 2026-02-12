@@ -1,0 +1,17 @@
+{
+  "skill_id": "temporal_change_estimation_global_eez_bootstrap",
+  "title": "Estimate temporal changes by aggregating normalized activity and infrastructure counts; compute yearly means and uncertainty",
+  "keywords": ["temporal change", "EEZ", "global mean", "yearly means", "standard deviation", "bootstrapping residuals", "seasonal cycle", "rolling median smoothing"],
+  "description": "Compute global and EEZ mean time series of (1) daily average number of vessels and (2) monthly median number of infrastructure. Aggregate gridded normalized data over areas consistently sampled (e.g., Sentinel-1 2017–2021 coverage). From time series, compute yearly means and standard deviations. Estimate percent change over a specified event period (e.g., pandemic effect) and standard error by bootstrapping residuals relative to an average seasonal cycle. For visualization, optionally smooth time series with a rolling median.",
+  "inputs": {
+    "activity_timeseries": "Daily vessel activity time series (normalized)",
+    "infrastructure_timeseries": "Monthly infrastructure series",
+    "spatial_masks": "Global mask + EEZ polygons",
+    "analysis_period": "e.g., 2017-01-01 to 2021-12-31"
+  },
+  "outputs": {
+    "yearly_stats": "Yearly means, std devs",
+    "change_estimates": "Percent changes + standard errors"
+  },
+  "workflow": {}
+}

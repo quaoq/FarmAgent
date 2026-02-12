@@ -1,0 +1,41 @@
+{
+  "skill_id": "infrastructure_classification_convnext_multimodal_s1_s2_100x100",
+  "title": "Classify offshore infrastructure using multimodal 6-month SAR+optical 100×100 tiles (ConvNeXt)",
+  "keywords": ["ConvNeXt", "multimodal", "Sentinel-1", "Sentinel-2", "SAR", "optical", "RGB", "NIR", "100x100", "wind", "oil", "other", "noise"],
+  "description": "Classify detected offshore structures using a ConvNeXt-based multi-input/single-output CNN. Inputs are two 100×100 tiles centered on each structure: (1) 6-month composite dual-band SAR (VH,VV) at ~20 m/pixel; (2) 6-month composite optical RGB+NIR at ~10 m/pixel. Two independent branches process SAR and optical tiles, concatenate features, and output class probabilities: wind, oil, other infrastructure, noise. If optical tiles are unavailable (e.g., seasonal darkness), classification uses SAR only (optical blank).",
+  "inputs": {
+    "infrastructure_candidates": "Detected stationary objects",
+    "sar_composites": "6-month VH,VV composites",
+    "optical_composites": "6-month RGB,NIR composites",
+    "tile_size_px": [100, 100]
+  },
+  "outputs": {
+    "infrastructure_labels": "Class probabilities + predicted class per structure"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "generate_multiband_median_scene_composites",
+      "tool_args": {
+        "time_window_duration": "6 months",
+        "multiband_image_bands": ["VH", "VV", "R", "G", "B", "NIR"]
+      },
+      "depends_on": []
+    },
+    "step2": {
+      "name": "step2",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "infrastructure_classification",
+      "tool_args": {
+        "tile_width": 100,
+        "tile_height": 100,
+        "time_window_duration": "6 months",
+        "multiband_image_bands": ["VH", "VV", "R", "G", "B", "NIR"]
+      },
+      "depends_on": ["step1"]
+    }
+  }
+}

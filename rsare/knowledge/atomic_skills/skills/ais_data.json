@@ -1,0 +1,28 @@
+{
+  "skill_id": "ais_data_load_and_interpolate_near_sar_acquisition",
+  "title": "Load AIS data near SAR acquisition times and interpolate vessel positions",
+  "keywords": ["AIS", "ORBCOMM", "Spire", "interpolation", "near-scene", "vessel identity", "vessel length"],
+  "description": "Load AIS data (e.g., from satellite AIS providers) and extract locations, lengths, and identities of AIS devices operating near SAR scenes around image acquisition time. Interpolate between AIS positions to estimate probable vessel locations at the moment of SAR acquisition, following the referenced AIS processing approach described in the paper.",
+  "inputs": {
+    "date1": "YYYY-MM-DD",
+    "date2": "YYYY-MM-DD",
+    "region": "[min_lon, min_lat, max_lon, max_lat]"
+  },
+  "outputs": {
+    "ais_tracks": "AIS messages/tracks with interpolated positions aligned to SAR acquisition timestamps"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_AIS_data",
+      "tool_args": {
+        "date1": "YYYY-MM-DD",
+        "date2": "YYYY-MM-DD",
+        "region": [-180.0, -90.0, 180.0, 90.0]
+      },
+      "depends_on": []
+    }
+  }
+}

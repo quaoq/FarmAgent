@@ -1,0 +1,62 @@
+{
+  "skill_id": "vessel_detection_sar_cfar_vh_two_parameter",
+  "title": "Detect vessels in Sentinel-1 SAR using two-parameter CFAR on VH band",
+  "keywords": ["CFAR", "Sentinel-1", "SAR", "VH", "anomaly detection", "inner window 200", "outer window 600", "time-dependent thresholds", "S1A", "S1B"],
+  "description": "Detect vessels using a two-parameter CFAR algorithm on the VH polarization band. Use a ring window with an inner window of 200×200 pixels and an outer window of 600×600 pixels. CFAR evaluates local background mean and standard deviation and flags anomalies above a time-dependent threshold. The paper reports different calibrated thresholds across time intervals and by satellite (S1A vs S1B) to maintain consistent detection of smaller vessels.",
+  "inputs": {
+    "sar_scenes": "Pre-processed SAR scenes with VH available",
+    "thresholds": "Calibrated thresholds by time interval and satellite",
+    "inner_window": [200, 200],
+    "outer_window": [600, 600]
+  },
+  "outputs": {
+    "cfar_detections": "Candidate vessel detections (bright anomalies) with locations and metadata"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "vessel_CFAR_detection",
+      "tool_args": {
+        "inner_window_width": 200,
+        "inner_window_height": 200,
+        "outer_window_width": 600,
+        "outer_window_height": 600,
+        "thresholds_by_interval": [
+          {
+            "date_start": "2016-01-01",
+            "date_end": "2016-10-31",
+            "s1A_background_pixel_threshold": 14.0,
+            "s1B_background_pixel_threshold": null
+          },
+          {
+            "date_start": "2016-09-01",
+            "date_end": "2017-01-31",
+            "s1A_background_pixel_threshold": 14.0,
+            "s1B_background_pixel_threshold": 18.0
+          },
+          {
+            "date_start": "2017-01-01",
+            "date_end": "2018-03-31",
+            "s1A_background_pixel_threshold": 14.0,
+            "s1B_background_pixel_threshold": 17.0
+          },
+          {
+            "date_start": "2018-03-01",
+            "date_end": "2020-01-31",
+            "s1A_background_pixel_threshold": 16.0,
+            "s1B_background_pixel_threshold": 19.0
+          },
+          {
+            "date_start": "2020-01-01",
+            "date_end": "2021-12-31",
+            "s1A_background_pixel_threshold": 22.0,
+            "s1B_background_pixel_threshold": 24.0
+          }
+        ]
+      },
+      "depends_on": []
+    }
+  }
+}

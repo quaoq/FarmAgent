@@ -1,0 +1,64 @@
+{
+  "skill_id": "environmental_physical_data_global_ocean_rasters",
+  "title": "Load environmental/physical ocean rasters for vessel context (1 km / ~0.01°)",
+  "keywords": ["bathymetry", "chlorophyll", "sea surface temperature", "currents", "distance to shore", "distance to port", "rasters", "1km", "0.01deg"],
+  "description": "Load global environmental and physical rasters over the ocean used as features for fishing/non-fishing classification. Variables include bathymetry, chlorophyll, sea-surface temperature, current speed, distance to shore, and distance to port. The paper describes these as 1-km-resolution global rasters; the fishing/non-fishing model uses 0.01° gridded fields and samples 100×100-pixel tiles around each detection.",
+  "inputs": {
+    "date1": "YYYY-MM-DD",
+    "date2": "YYYY-MM-DD",
+    "region": "[min_lon, min_lat, max_lon, max_lat]"
+  },
+  "outputs": {
+    "environmental_rasters": "Raster layers (bathymetry, chlorophyll, SST, currents, distance to shore/port, etc.)"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_bathymetry_data",
+      "tool_args": {},
+      "depends_on": []
+    },
+    "step2": {
+      "name": "step2",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_chlorophyll_data",
+      "tool_args": {},
+      "depends_on": []
+    },
+    "step3": {
+      "name": "step3",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_surface_temperature_data",
+      "tool_args": {},
+      "depends_on": []
+    },
+    "step4": {
+      "name": "step4",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_current_speed_data",
+      "tool_args": {},
+      "depends_on": []
+    },
+    "step5": {
+      "name": "step5",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_port_distance_data",
+      "tool_args": {},
+      "depends_on": []
+    },
+    "step6": {
+      "name": "step6",
+      "content": null,
+      "op_type": "READ",
+      "tool_name": "load_distance_to_shore_data",
+      "tool_args": {},
+      "depends_on": []
+    }
+  }
+}

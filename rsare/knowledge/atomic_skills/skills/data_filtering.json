@@ -1,0 +1,18 @@
+{
+  "skill_id": "data_filtering_offshore_masks_and_artifact_removal",
+  "title": "Filter detections using shoreline buffer, sea ice masks, fixed-structure removal, road/bridge offsets, and radar ambiguity removal",
+  "keywords": ["shoreline buffer 1km", "sea ice mask", "MASIE-NH", "fixed structures", "anchored vessels", "roads", "bridges", "vehicle offsets", "radar ambiguities", "ghosts", "off-nadir angle", "azimuth offset"],
+  "description": "Apply data filtering steps to reduce false detections and artifacts: (1) restrict valid detection areas using a compiled global shoreline and remove a 1 km buffer from shore; (2) mask regions with sea ice using MASIE-NH plus predefined seasonal ice bounding boxes; (3) remove repeated objects across images (fixed structures) from vessel-detection dataset to exclude infrastructure and long-anchored vessels; (4) remove detections consistent with reflections from vehicles on bridges/roads close to shore by computing expected offset polygons (based on road proximity and assumed vehicle speeds) and excluding detections within them; (5) identify and remove radar ambiguities ('ghosts') by analyzing off-nadir angle bins and azimuth offsets, flagging detection pairs aligned with the satellite ground track and selecting the smaller/dimmer as ambiguity; (6) optionally cluster fixed structures over time (e.g., DBSCAN within 50 m) for infrastructure time series consistency.",
+  "inputs": {
+    "sar_scenes": "SAR imagery and acquisition geometry metadata",
+    "detections": "Raw detections (vessels or infrastructure candidates)",
+    "shoreline_dataset": "Compiled global shoreline",
+    "sea_ice_dataset": "MASIE-NH + additional regions",
+    "roads_dataset": "Global roads near coastlines",
+    "sar_geometry": "Off-nadir angle, azimuth direction, sub-swath"
+  },
+  "outputs": {
+    "filtered_detections": "Detections after applying masks and artifact removal"
+  },
+  "workflow": {}
+}

@@ -1,0 +1,17 @@
+{
+  "skill_id": "false_positives_and_recall_estimation_protocol",
+  "title": "Estimate false positive density and vessel detection recall using AIS-aligned analysis",
+  "keywords": ["false positives", "false positive density", "recall", "AIS", "evaluation", "2 minutes", "spacing", "vessel length"],
+  "description": "Estimate false positives using 'false positive density' (false positives per unit area) by analyzing large-area imagery in low-AIS-activity regions, far from shore, and in countries with good AIS use/reception. For recall, identify AIS-equipped vessels with positions within <2 minutes of SAR acquisition that should have appeared, and compute detection recall as a function of vessel length and spacing to nearest AIS vessel. Use this to support downstream AIS matching likelihood terms.",
+  "inputs": {
+    "sar_detections": "Detections from CFAR + filtering",
+    "ais_tracks": "AIS positions near acquisition times",
+    "shore_mask": "Offshore-valid area mask",
+    "filters": "low AIS activity, far from shore"
+  },
+  "outputs": {
+    "false_positive_density": "Metric per area unit",
+    "recall_curve": "Recall as function of vessel size and spacing"
+  },
+  "workflow": {}
+}

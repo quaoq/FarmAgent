@@ -1,0 +1,35 @@
+{
+  "skill_id": "visible_nir_imagery_sentinel2_l1c_cloudmask",
+  "title": "Load Sentinel-2 Level-1C RGB+NIR imagery with QA60 cloud filtering",
+  "keywords": ["Sentinel-2", "S2A", "S2B", "RGB", "NIR", "Level-1C", "QA60", "cloud mask", "GEE", "COPERNICUS/S2"],
+  "description": "Use Copernicus Sentinel-2 MSI imagery (S2A+S2B) and the Level-1C product from Google Earth Engine (COPERNICUS/S2). Use RGB and NIR bands. Exclude scenes with more than 20% cloud coverage using the QA60 band cloud mask. This optical data is used for multimodal infrastructure classification (paired with Sentinel-1 SAR composites).",
+  "inputs": {
+    "date1": "YYYY-MM-DD",
+    "date2": "YYYY-MM-DD",
+    "region": "[min_lon, min_lat, max_lon, max_lat]",
+    "satellite": "S2A|S2B|S2AB",
+    "collection": "COPERNICUS/S2",
+    "cloud_coverage_max": 0.2
+  },
+  "outputs": {
+    "optical_scenes": "Cloud-filtered Sentinel-2 scenes (RGB+NIR)"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "load_optical_scenes",
+      "tool_args": {
+        "date1": "YYYY-MM-DD",
+        "date2": "YYYY-MM-DD",
+        "region": [-180.0, -90.0, 180.0, 90.0],
+        "satellite": "S2AB",
+        "collection": "COPERNICUS/S2",
+        "cloud_coverage_max": 0.2,
+        "cloud_mask_band": "QA60"
+      },
+      "depends_on": []
+    }
+  }
+}

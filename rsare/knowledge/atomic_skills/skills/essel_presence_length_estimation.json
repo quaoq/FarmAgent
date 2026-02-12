@@ -1,0 +1,40 @@
+{
+  "skill_id": "vessel_presence_length_estimation_resnet_80x80_vh_vv",
+  "title": "Classify vessel presence and estimate length from 80×80 dual-pol SAR tiles",
+  "keywords": ["ResNet", "CNN", "80x80", "VH", "VV", "presence", "length regression", "false detections filtering"],
+  "description": "For each CFAR detection, extract an 80×80 pixel SAR tile centered on the detection and preserving both VH and VV polarization bands. Apply a single-input, multi-output CNN (ResNet-based) that outputs (1) probability of object presence and (2) estimated object length. Use this to filter out false CFAR detections and estimate vessel length.",
+  "inputs": {
+    "cfar_detections": "CFAR anomalies with scene reference and coordinates",
+    "tile_size_px": [80, 80],
+    "bands": ["VH", "VV"]
+  },
+  "outputs": {
+    "confirmed_vessels": "Detections with vessel probability and estimated length"
+  },
+  "workflow": {
+    "step1": {
+      "name": "step1",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "extract_vessel_detection_tiles",
+      "tool_args": {
+        "tile_width": 80,
+        "tile_height": 80,
+        "bands": ["VH", "VV"],
+        "sar_pixel_resolution_m": 20.0
+      },
+      "depends_on": []
+    },
+    "step2": {
+      "name": "step2",
+      "content": null,
+      "op_type": "WRITE",
+      "tool_name": "vessel_presence_length_estimation",
+      "tool_args": {
+        "tile_width": 80,
+        "tile_height": 80
+      },
+      "depends_on": ["step1"]
+    }
+  }
+}
