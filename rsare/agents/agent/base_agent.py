@@ -38,7 +38,6 @@ class BaseAgent:
             dict: A dictionary containing the model's response, input tokens, output tokens, etc.
         """
         start_time = time.time()
-        print(f"messages passed to chat_completion: {messages}")
         response = self.llm.chat_completion(messages, tools)
         elapsed_time = round(time.time() - start_time, 4)
         self.messages.llm_response(response, elapsed_time)

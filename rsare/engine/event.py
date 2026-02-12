@@ -12,9 +12,9 @@ class Event(ABC):
     time_duration: float  # Duration of the event in times
     time_started: float | None = None
     time_completed: float | None = None
-    triggered:bool = False
+    triggered: bool = False
 
-    def start(self,time_started):
+    def start(self, time_started):
         """
         Starts the event.
         This method should be overridden by subclasses to define specific event behavior.
@@ -22,11 +22,12 @@ class Event(ABC):
         self.time_started = time_started
         self.triggered = True
 
-    def complete(self,time_completed):
+    def complete(self, time_completed):
         """
         Completes the event.
         """
         self.time_completed = time_completed
+
     def has_elapsed_duration(self, current_time) -> bool:
         """
         Checks whether the event has run for its configured duration.

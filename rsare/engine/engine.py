@@ -1,6 +1,5 @@
 # rsare/engine/engine.py
 import time
-from operator import truediv
 from threading import Thread
 
 from rsare.scenarios.time_manager import TimeManager
