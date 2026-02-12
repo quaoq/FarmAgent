@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 from rsare.engine.event import Event
 
@@ -15,14 +16,14 @@ Match detected vessels with AIS data to identify publicly trackable vessels. Loa
 
 Aggregate detected vessels by grid cells with 0.1-degree resolution, normalize by overpasses, and identify the regions with highest and lowest densities of tracked vessel activities.
 """
-from rsare.agents.agent.toolset_builder import agent_tool
 from rsare.scenarios.scenario.scenario import Scenario
 from rsare.scenarios.scenario.workflow import WorkflowStep
 
 
 class EarthQuakeEvent(Event):
     def step(self):
-        return f"An earthquake has occurred at time {self.time_start}!"
+        readable_time = datetime.fromtimestamp(self.time_start)
+        return f"An earthquake has occurred at time {readable_time}!"
 
 
 class ScenarioFigure1Task1(Scenario):
