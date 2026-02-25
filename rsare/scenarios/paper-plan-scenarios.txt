@@ -1,0 +1,241 @@
+ALLINFO_PROMPT = """
+Using Sentinel-1 GRD SAR imagery from the S1A and S1B satellites, 
+covering the Shanghai region (121.0–123.0°E, 30.0–32.0°N) and the 
+period from 2018-08-08 to 2018-08-10, load all available SAR scenes and 
+clip a 500-m border buffer to remove edge artefacts.
+
+>> Time: downloading Sentinel data  finished
+>> Adaptability: "I don't have S1A data available, only S1B."
+>> Ambiguity: "There are not available data at all (S1A nor S1B)."
+>> Noise: "New satellite S1B images became available"
+>> Noise: "GEE API is temporarily unavailable, please try again!"
+
+Load global shoreline data and apply a 1-km shoreline buffer as a spatial 
+mask to restrict each SAR scene to valid offshore analysis areas.
+
+Detect vessels using the (VV) VH polarization band with a two-parameter CFAR configuration, 
+applying a 200 × 200-pixel inner window and a 600 × 600-pixel outer window. 
+Set the detection threshold to 16 for S1A scenes and 19 for S1B scenes.
+
+>> Timing: detection finished
+>> Adaptability: "VV polarization is not supported, please use VH polarization"
+>> Ambiguity: "You haven't specified window sizes, please provide..."
+if system.unspecified_window == then --> "Please use 200 × 200-pixel inner window and a 600 × 600-pixel outer window"
+>> Noise: 
+
+GeoARE: 
+
+For each CFAR detection, extract an 80 × 80-pixel dual-polarization (VH + VV) SAR tile. 
+Apply a pre-trained neural network to confirm vessel presence, filter out false detections, 
+and estimate vessel length.
+
+Finally, report the total number of detected vessel activities during the study period 
+and the total number of vessels.
+"""
+
+** NOTE: the number of steps is just a reference
+
+Easy: ~Steps<5~ just a task (e.g., "load only images from an area")
+E.g. "Load images S1A in Shanghai"
+(Initial steps already has data preloaded) "Run CFAR"
+
+Medium: 5<Steps<10 (e.g., your scenario_1.py)
+Load -> Filter -> Detect
+
+Hard:  10<Steps (e.g., your figure1_task1 scenario)
+Like nature paper
+e.g. multiple loads (multiple data) -> multiple processing steps -> different detections -> output like a figure
+
+-- 
+
+Types: 
+1. Search
+2. Execute
+3. Time
+4. Ambiguity
+5. Noise
+6. Adaptability
+
+Example implementation (not sure! check if a better idea)
+
+
+class Scenario1(Scenario):
+
+    def __init__(self, scenario_id=None, scenario_input=None, sarTools=None):
+
+    def initiate_scenario(self):
+        pass
+
+    def execute_scenario(self):
+        call_tool... <-- agent
+        load_SAR_scenes ==> system_state.unavailable_data="S1A"
+        check system state:
+        if then-else: system_state.unavailable_data is not None!
+            inject a user message ==> "Use S1B instead"
+
+Possibly under engine.py
+
+    ...
+
+    def run_scenario_agent(self):
+        """
+        Run the scenario
+        """
+        # Initiate the World state
+        self.scenario.initiate_scenario()
+        # Run the agent against the task
+        self.agent.run(scenario=self.scenario) # check below!
+
+Possibly under agent.py
+
+    .....
+
+    def run(self, scenario): # instead of run(self, scenario.input)
+        self.messages.user_input(scenario.input)
+        self.workflow.add_node(WorkflowStep(op_type="USER", content=input,time=self.time_manager.time()))
+
+        while True:
+
+            message = self.chat_completion(self.messages(), tools=self.tool_schemas)
+            if not message.tool_calls: # if finished handling tool calls, break
+                break
+
+            # === handle tool calls ===
+            for tool_call in message.tool_calls:
+                tool_response = self.call_function(tool_call)
+
+            ## EMULATE scenario maybe!
+            # ==> inject "EVENT" like user message!
+            next_event_message = scenario.emulate.get_next_event
+            self.messages.user_input(next_event_message)
+            self.workflow.add_node(WorkflowStep(op_type="USER", content=next_event_message,time=self.time_manager.time()))
+
+        return message.content
+
+--
+
+Research problem: "Existing geo-agents give all instructions in the prompt!"
+
+Problem A. Environment: The environment changes, there are ambiguities, ... (assume we have prompt)
+
+Problem B. Scenarios: They are simple scripting tasks, and we do NATURE
+
+Problem C. Prompting: (assume we have the environment, then how you promt changes? Do you give the entire solution manually?)
+
+Problem D. "A researcher agent!" We introduce RESEARCH steps + we introduce SELF-EVOLVING researchers!
+
+
+--
+
+ARE: (even though it consists of No.3, they do not ablate prompting!)
+--
+1. Environment ***** = Noise, Tools, ...
+2. Scenario **** = "Figure1" NATURE!!
+3. Prompt *** = ???
+4. Agent==Researcher!! **  ARE != RAE
+
+--
+
+Nature paper: you need manually give all instructions! 
+
+-- Manual (gold): All info in the prompt
+-- PowerChain: similarity search --> JSON examples
+-- GeoFlow: GPT to first recommend a JSON, then execute
+-- RAG: similarity search --> text
+-- In-context: Upload the entire PDF!
+-- Atomic skills: similarity search --> skill description 
+
+
+<-------------------------------------------------------------------------------->
+RAG                            AtomicSkill (RAG)                PowerChain (RAG).     || GeoAgent + GeoFlow ==> LLM-generated Workflow
+Text unstructured                Structured text.           JSON (structured)               XXX
+"VV polarization ..."            "Skill CFAR:..."           {ste1: "arg1", ...}             XXX
++ Info                             +info                            - info
+- no solution                      +example solution                + solution
+
+How far we are from gold?
+-- RAG: 10%.
+-- PowerChain: 10%.   -----v ** why is PowerChain bad? Can we improve it?
+-- ????? GeoARE ~60%    +50%
+-- Gold: 70% --> Why is this NOT 100%?
+
+----------
+
+Reviewer: "Instead of manually creating prompts, you are now manually creating atomic skills"!
+????
+==> Generalize? If I take the atomic skills for Figure 1, can the agent solve Figure 4?
+Existing agents, write custom tools for specific scenarios with the solution already in mind.
+
+==> Self-evolving? 
+Step 1. solve Easy tasks: only provide skills for easy! 
+- CFAR
+- AIS
+- EEZ 
+
+Step 2. Here is my atomic skill FORMAT, please write a skill summary for how you do CFAR!
+
+** GOAL here: LLM answer to be as close as possible to the skills we created!
+
+Step 3. GeoARE+SELFEVOLVE ~ 55%
+
+
+---
+
+Research Exploration: 
+* Can we also implement the RESEARCH OPERATION types?
+
+WRITE/READ + RESEARCH
+
+CORE Evaluation:
+
+Flow example A:
+----
+(READ)
+|____________________________________________
+|                                           |
+v                                           v
+(RESEARCH: Grid size 200x200)               (RESEARCH: Grid size 300x300)
+|                                           |
+|____________________________________________
+|
+v
+(WRITE: Run CFAR: 200x200)
+
+If you get the best result with 200x200
+100x100: 10
+200x200: 20
+300x300: 12
+==> Solution: 200x200
+
+Flow example B:
+
+What if you executed RESEARCH out-of-place? E.g., what if you run 
+"RESEARCH: Grid size" before loading the data? This should be penalized?
+
+|___________________________________________
+|                                           |
+v                                           v
+(RESEARCH: Grid size 200x200)               (RESEARCH: Grid size 300x300)
+|
+v
+XX (WRONG)
+|
+(READ)
+|
+...
+
+----
+
+IDEAL: 
+* Can we report ARE FULL-PATH ("CORE") to show how ours is better?
+    -- Case 1. If you report only ARE true-false?
+    -- Case 2. If you report metrics (like your code now), and you don't have RESEARCH
+    -- Case 3. Our proposed Full-path + RESEARCH
+* Can we do the same for Earthquake?
+* Can we do the same for "Easy benchmarks"
+    -- Can we run this on GeoAgent tasks? <-- GEE?
+    -- Can we run this on GeoLLM-Engine tasks !
+* Run for multiple LLMs (GPT, Llama, DeepSeek, ...)
+* Profile runtime on AGX.
+
+----
