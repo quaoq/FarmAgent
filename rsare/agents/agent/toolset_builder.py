@@ -79,14 +79,28 @@ def build_toolset(toolsets):
     assert isinstance(toolsets, list)
     # Aggregate all tools from the provided toolset objects.
     tools = []
+    tool_to_app_name = {}
     for toolset in toolsets:
         # extract_agent_toolset is a utility function that returns a dict of {tool_name: callable}
         toolset_list = agent_toolset(toolset)
+        # Track which app each tool belongs to
+        app_name = getattr(toolset, 'name', toolset.__class__.__name__)
+        for tool in toolset_list:
+            tool_to_app_name[tool] = app_name
         # We add the tool callables to our aggregated list.
         tools.extend(toolset_list)
     # turn python functions into tools and save a reverse map
     # following: https://cookbook.openai.com/examples/orchestrating_agents
-    tool_schemas = [build_tool_schema(tool) for tool in tools]
-    tools_map = {tool.__name__: tool for tool in tools}
+    tool_schemas = []
+    tools_map = {}
+    for tool in tools:
+        schema = build_tool_schema(tool)
+        app_name = tool_to_app_name[tool]
+        original_name = schema["function"]["name"]
+        # Prefix tool name with app name to ensure uniqueness
+        prefixed_name = f"{app_name}__{original_name}"
+        schema["function"]["name"] = prefixed_name
+        tool_schemas.append(schema)
+        tools_map[prefixed_name] = tool
 
     return tools, tool_schemas, tools_map

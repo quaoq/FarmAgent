@@ -1,30 +1,39 @@
 # rsare/scenarios/scenario/scenario.py
 import datetime
+from typing import Any, Type, TypeVar, cast
 
+from rsare.apps.farm_app import App
 from rsare.engine.event import Event
 from rsare.scenarios.scenario.workflow import Workflow
 
+T = TypeVar("T", bound=App)
+
+
 class Scenario:
-
     scenario_class: str = "base_scenario"
+    scenario_id: str = ""
+    scenario_input: str = ""
+    dynamic_events: list | None = None
+    start_time: float | None = None
+    time_increment_in_seconds: int = 1
+    apps: list[App] | None = None
 
-    def __init__(self, scenario_id, scenario_input,dynamic_events = None,start_time=None):
-        """
-        Initialize the base Scenario class.
+    workflow: Workflow = None
 
-        Args:
-            scenario_id (int): The id of the scenario defined.
-            scenario_input (List[str]): The user prompt of the scenario defined.
-                                        Support list of strings for multiround prompts.
-        """
-        self.scenario_id = scenario_id
-        self.scenario_input = scenario_input
-        self.dynamic_events = dynamic_events
-        self.workflow = Workflow()
-        self.start_time = start_time
-        self.time_increment_in_seconds = 1
+    def __post_init__(self):
+        if self.apps is None:
+            self.apps = []
+        if self.dynamic_events is None:
+            self.dynamic_events = []
+        if self.workflow is None:
+            self.workflow = Workflow()
 
-    def initiate_scenario(self):
+
+        # Copy the class's scenario_id to the instance if the instance's scenario_id is empty
+        if not self.scenario_id and hasattr(self.__class__, "scenario_id"):
+            self.scenario_id = getattr(self.__class__, "scenario_id")
+
+    def init_and_populate_apps(self):
         """
         Logic that specifies the initial state for the ARE world
         This logic is scenario specific, implemented by subclasses
@@ -40,8 +49,19 @@ class Scenario:
         raise NotImplementedError(
             "oracle_solution() must be implemented by subclasses.")
 
-    def dynamic_events(self):
-        raise NotImplementedError(
-            "dynamic_events() must be implemented by subclasses.")
+    def get_typed_app(self, app_type: Type[T], app_name: str | None = None) -> T:
+        """
+        Get the app with the given type and optional name.
+        If name is not provided, it will be inferred from the app type.
+        """
+        name = app_name or app_type.__name__
+        for app in self.apps or []:
+            if isinstance(app, app_type) and app.name == name:
+                return cast(T, app)
+        raise ValueError(
+            f"App {name} of type {app_type.__name__} not found in scenario."
+        )
 
+    def validate(self):
 
+        return "Todo: implement scenario validation logic"
