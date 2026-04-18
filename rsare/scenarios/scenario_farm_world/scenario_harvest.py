@@ -143,14 +143,14 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
             name="check_weather", op_type="READ",
-            tool_name="get_current_weather", tool_args={}, depends_on=[],
+            tool_name="WeatherApp__get_current_weather", tool_args={}, depends_on=[],
         ))
 
         if run_oracle:
             print(weather.get_forecast())
         self.workflow.add_node(WorkflowStep(
             name="check_forecast", op_type="READ",
-            tool_name="get_forecast", tool_args={},
+            tool_name="WeatherApp__get_forecast", tool_args={},
             depends_on=["check_weather"],
         ))
 
@@ -158,7 +158,7 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
-            tool_name="read_soil_sensors", tool_args={},
+            tool_name="SensorApp__read_soil_sensors", tool_args={},
             depends_on=["check_forecast"],
         ))
 
@@ -166,7 +166,7 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(sensor.read_canopy_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_canopy", op_type="READ",
-            tool_name="read_canopy_sensors", tool_args={},
+            tool_name="SensorApp__read_canopy_sensors", tool_args={},
             depends_on=["read_soil"],
         ))
 
@@ -174,7 +174,7 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(farm_world.get_farm_overview())
         self.workflow.add_node(WorkflowStep(
             name="farm_overview", op_type="READ",
-            tool_name="get_farm_overview", tool_args={},
+            tool_name="FarmWorldApp__get_farm_overview", tool_args={},
             depends_on=["read_canopy"],
         ))
 
@@ -183,7 +183,7 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(drone.fly_survey(start_ridge=0, end_ridge=63))
         self.workflow.add_node(WorkflowStep(
             name="drone_survey", op_type="READ",
-            tool_name="fly_survey",
+            tool_name="Mavic3M__fly_survey",
             tool_args={"start_ridge": 0, "end_ridge": 63},
             depends_on=["farm_overview"],
         ))
@@ -193,7 +193,7 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(tractor.get_status())
         self.workflow.add_node(WorkflowStep(
             name="check_tractor", op_type="READ",
-            tool_name="get_status", tool_args={},
+            tool_name="TractorApp__get_status", tool_args={},
             depends_on=["drone_survey"],
         ))
 
@@ -201,7 +201,7 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(tractor.refuel(80.0))
         self.workflow.add_node(WorkflowStep(
             name="refuel", op_type="WRITE",
-            tool_name="refuel", tool_args={"amount_l": 80.0},
+            tool_name="TractorApp__refuel", tool_args={"liters": 80.0},
             depends_on=["check_tractor"],
         ))
 
@@ -215,7 +215,7 @@ class ScenarioFarmWorldHarvest(Scenario):
                 print(tractor.harvest(start_ridge=start_ridge, end_ridge=end_ridge))
             self.workflow.add_node(WorkflowStep(
                 name=harvest_name, op_type="WRITE",
-                tool_name="harvest",
+                tool_name="TractorApp__harvest",
                 tool_args={"start_ridge": start_ridge, "end_ridge": end_ridge},
                 depends_on=[prev],
             ))
@@ -227,7 +227,7 @@ class ScenarioFarmWorldHarvest(Scenario):
                     print(tractor.unload_grain())
                 self.workflow.add_node(WorkflowStep(
                     name=unload_name, op_type="WRITE",
-                    tool_name="unload_grain", tool_args={},
+                    tool_name="TractorApp__unload_grain", tool_args={},
                     depends_on=[prev],
                 ))
                 prev = unload_name
@@ -237,6 +237,6 @@ class ScenarioFarmWorldHarvest(Scenario):
             print(farm_world.get_inventory())
         self.workflow.add_node(WorkflowStep(
             name="check_inventory", op_type="READ",
-            tool_name="get_inventory", tool_args={},
+            tool_name="FarmWorldApp__get_inventory", tool_args={},
             depends_on=[prev],
         ))

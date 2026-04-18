@@ -137,14 +137,14 @@ class ScenarioFarmWorldPlanting(Scenario):
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
             name="check_weather", op_type="READ",
-            tool_name="get_current_weather", tool_args={}, depends_on=[],
+            tool_name="WeatherApp__get_current_weather", tool_args={}, depends_on=[],
         ))
 
         if run_oracle:
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
-            tool_name="read_soil_sensors", tool_args={},
+            tool_name="SensorApp__read_soil_sensors", tool_args={},
             depends_on=["check_weather"],
         ))
 
@@ -152,7 +152,7 @@ class ScenarioFarmWorldPlanting(Scenario):
             print(tractor.get_status())
         self.workflow.add_node(WorkflowStep(
             name="check_tractor", op_type="READ",
-            tool_name="get_status", tool_args={},
+            tool_name="TractorApp__get_status", tool_args={},
             depends_on=["read_soil"],
         ))
 
@@ -160,7 +160,7 @@ class ScenarioFarmWorldPlanting(Scenario):
             print(farm_world.get_inventory())
         self.workflow.add_node(WorkflowStep(
             name="check_inventory", op_type="READ",
-            tool_name="get_inventory", tool_args={},
+            tool_name="FarmWorldApp__get_inventory", tool_args={},
             depends_on=["check_tractor"],
         ))
 
@@ -169,8 +169,8 @@ class ScenarioFarmWorldPlanting(Scenario):
             print(tractor.load_seeds(_SEED_TYPE, _SEEDS_PER_LOAD))
         self.workflow.add_node(WorkflowStep(
             name="load_seeds_1", op_type="WRITE",
-            tool_name="load_seeds",
-            tool_args={"seed_type": _SEED_TYPE, "amount": _SEEDS_PER_LOAD},
+            tool_name="TractorApp__load_seeds",
+            tool_args={"seed_type": _SEED_TYPE, "count": _SEEDS_PER_LOAD},
             depends_on=["check_inventory"],
         ))
 
@@ -184,9 +184,9 @@ class ScenarioFarmWorldPlanting(Scenario):
                 print(tractor.plant_seeds(start, end, _DEPTH_CM, _SPACING_CM))
             self.workflow.add_node(WorkflowStep(
                 name=name, op_type="WRITE",
-                tool_name="plant_seeds",
+                tool_name="TractorApp__plant_seeds",
                 tool_args={"start_ridge": start, "end_ridge": end,
-                            "depth_cm": _DEPTH_CM, "spacing_cm": _SPACING_CM},
+                            "depth_cm": _DEPTH_CM, "seed_spacing_cm": _SPACING_CM},
                 depends_on=[prev],
             ))
             prev = name
@@ -196,8 +196,8 @@ class ScenarioFarmWorldPlanting(Scenario):
             print(tractor.load_seeds(_SEED_TYPE, _SEEDS_PER_LOAD))
         self.workflow.add_node(WorkflowStep(
             name="load_seeds_2", op_type="WRITE",
-            tool_name="load_seeds",
-            tool_args={"seed_type": _SEED_TYPE, "amount": _SEEDS_PER_LOAD},
+            tool_name="TractorApp__load_seeds",
+            tool_args={"seed_type": _SEED_TYPE, "count": _SEEDS_PER_LOAD},
             depends_on=[prev],
         ))
 
@@ -211,9 +211,9 @@ class ScenarioFarmWorldPlanting(Scenario):
                 print(tractor.plant_seeds(start, end, _DEPTH_CM, _SPACING_CM))
             self.workflow.add_node(WorkflowStep(
                 name=name, op_type="WRITE",
-                tool_name="plant_seeds",
+                tool_name="TractorApp__plant_seeds",
                 tool_args={"start_ridge": start, "end_ridge": end,
-                            "depth_cm": _DEPTH_CM, "spacing_cm": _SPACING_CM},
+                            "depth_cm": _DEPTH_CM, "seed_spacing_cm": _SPACING_CM},
                 depends_on=[prev],
             ))
             prev = name
@@ -223,8 +223,8 @@ class ScenarioFarmWorldPlanting(Scenario):
             print(tractor.load_seeds(_SEED_TYPE, _SEEDS_PER_LOAD))
         self.workflow.add_node(WorkflowStep(
             name="load_seeds_3", op_type="WRITE",
-            tool_name="load_seeds",
-            tool_args={"seed_type": _SEED_TYPE, "amount": _SEEDS_PER_LOAD},
+            tool_name="TractorApp__load_seeds",
+            tool_args={"seed_type": _SEED_TYPE, "count": _SEEDS_PER_LOAD},
             depends_on=[prev],
         ))
 
@@ -238,9 +238,9 @@ class ScenarioFarmWorldPlanting(Scenario):
                 print(tractor.plant_seeds(start, end, _DEPTH_CM, _SPACING_CM))
             self.workflow.add_node(WorkflowStep(
                 name=name, op_type="WRITE",
-                tool_name="plant_seeds",
+                tool_name="TractorApp__plant_seeds",
                 tool_args={"start_ridge": start, "end_ridge": end,
-                            "depth_cm": _DEPTH_CM, "spacing_cm": _SPACING_CM},
+                            "depth_cm": _DEPTH_CM, "seed_spacing_cm": _SPACING_CM},
                 depends_on=[prev],
             ))
             prev = name

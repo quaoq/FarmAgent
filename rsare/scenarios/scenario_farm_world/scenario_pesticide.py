@@ -160,14 +160,14 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
             name="check_weather", op_type="READ",
-            tool_name="get_current_weather", tool_args={}, depends_on=[],
+            tool_name="WeatherApp__get_current_weather", tool_args={}, depends_on=[],
         ))
 
         if run_oracle:
             print(weather.get_forecast(days=3))
         self.workflow.add_node(WorkflowStep(
             name="check_forecast", op_type="READ",
-            tool_name="get_forecast", tool_args={"days": 3},
+            tool_name="WeatherApp__get_forecast", tool_args={"days": 3},
             depends_on=["check_weather"],
         ))
 
@@ -175,7 +175,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
-            tool_name="read_soil_sensors", tool_args={},
+            tool_name="SensorApp__read_soil_sensors", tool_args={},
             depends_on=["check_forecast"],
         ))
 
@@ -183,7 +183,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(sensor.read_canopy_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_canopy", op_type="READ",
-            tool_name="read_canopy_sensors", tool_args={},
+            tool_name="SensorApp__read_canopy_sensors", tool_args={},
             depends_on=["read_soil"],
         ))
 
@@ -191,7 +191,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(mavic.check_status())
         self.workflow.add_node(WorkflowStep(
             name="check_drone", op_type="READ",
-            tool_name="check_status", tool_args={},
+            tool_name="Mavic3M__check_status", tool_args={},
             depends_on=["read_canopy"],
         ))
 
@@ -199,7 +199,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(mavic.fly_survey(_BOOM_START, _MANUAL_RIDGE))
         self.workflow.add_node(WorkflowStep(
             name="survey_suspect", op_type="READ",
-            tool_name="fly_survey",
+            tool_name="Mavic3M__fly_survey",
             tool_args={"start_ridge": _BOOM_START, "end_ridge": _MANUAL_RIDGE},
             depends_on=["check_drone"],
         ))
@@ -208,7 +208,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(robot_0.check_status())
         self.workflow.add_node(WorkflowStep(
             name="check_robot", op_type="READ",
-            tool_name="check_status", tool_args={},
+            tool_name="Robot0__check_status", tool_args={},
             depends_on=["survey_suspect"],
         ))
 
@@ -216,7 +216,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(robot_0.inspect_ridge(20))
         self.workflow.add_node(WorkflowStep(
             name="robot_inspect", op_type="READ",
-            tool_name="inspect_ridge", tool_args={"ridge_id": 20},
+            tool_name="Robot0__inspect_ridge", tool_args={"ridge_id": 20},
             depends_on=["check_robot"],
         ))
 
@@ -224,7 +224,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(tractor.get_status())
         self.workflow.add_node(WorkflowStep(
             name="check_tractor", op_type="READ",
-            tool_name="get_status", tool_args={},
+            tool_name="TractorApp__get_status", tool_args={},
             depends_on=["robot_inspect"],
         ))
 
@@ -232,7 +232,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(farm_world.get_inventory())
         self.workflow.add_node(WorkflowStep(
             name="check_inventory", op_type="READ",
-            tool_name="get_inventory", tool_args={},
+            tool_name="FarmWorldApp__get_inventory", tool_args={},
             depends_on=["check_tractor"],
         ))
 
@@ -240,7 +240,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(tractor.refuel(_REFUEL_L))
         self.workflow.add_node(WorkflowStep(
             name="refuel", op_type="WRITE",
-            tool_name="refuel", tool_args={"amount_l": _REFUEL_L},
+            tool_name="TractorApp__refuel", tool_args={"liters": _REFUEL_L},
             depends_on=["check_inventory"],
         ))
 
@@ -248,8 +248,8 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(tractor.refill_pesticide_tank(_PESTICIDE_LOAD_L))
         self.workflow.add_node(WorkflowStep(
             name="load_pesticide", op_type="WRITE",
-            tool_name="refill_pesticide_tank",
-            tool_args={"amount_l": _PESTICIDE_LOAD_L},
+            tool_name="TractorApp__refill_pesticide_tank",
+            tool_args={"liters": _PESTICIDE_LOAD_L},
             depends_on=["refuel"],
         ))
 
@@ -257,7 +257,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(tractor.apply_pesticide(_BOOM_START, _BOOM_END))
         self.workflow.add_node(WorkflowStep(
             name="spray_boom", op_type="WRITE",
-            tool_name="apply_pesticide",
+            tool_name="TractorApp__apply_pesticide",
             tool_args={"start_ridge": _BOOM_START, "end_ridge": _BOOM_END},
             depends_on=["load_pesticide"],
         ))
@@ -266,7 +266,7 @@ class ScenarioFarmWorldPesticide(Scenario):
             print(field_ops.apply_pesticide_manual(_MANUAL_RIDGE))
         self.workflow.add_node(WorkflowStep(
             name="spray_manual", op_type="WRITE",
-            tool_name="apply_pesticide_manual",
+            tool_name="FieldOpsApp__apply_pesticide_manual",
             tool_args={"ridge_id": _MANUAL_RIDGE},
             depends_on=["spray_boom"],
         ))

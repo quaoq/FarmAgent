@@ -138,14 +138,14 @@ class ScenarioFarmWorldIrrigation(Scenario):
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
             name="check_weather", op_type="READ",
-            tool_name="get_current_weather", tool_args={}, depends_on=[],
+            tool_name="WeatherApp__get_current_weather", tool_args={}, depends_on=[],
         ))
 
         if run_oracle:
             print(weather.get_forecast(days=3))
         self.workflow.add_node(WorkflowStep(
             name="check_forecast", op_type="READ",
-            tool_name="get_forecast", tool_args={"days": 3},
+            tool_name="WeatherApp__get_forecast", tool_args={"days": 3},
             depends_on=["check_weather"],
         ))
 
@@ -153,7 +153,7 @@ class ScenarioFarmWorldIrrigation(Scenario):
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
-            tool_name="read_soil_sensors", tool_args={},
+            tool_name="SensorApp__read_soil_sensors", tool_args={},
             depends_on=["check_forecast"],
         ))
 
@@ -161,7 +161,7 @@ class ScenarioFarmWorldIrrigation(Scenario):
             print(mavic.check_status())
         self.workflow.add_node(WorkflowStep(
             name="check_drone", op_type="READ",
-            tool_name="check_status", tool_args={},
+            tool_name="Mavic3M__check_status", tool_args={},
             depends_on=["read_soil"],
         ))
 
@@ -169,7 +169,7 @@ class ScenarioFarmWorldIrrigation(Scenario):
             print(mavic.fly_survey(22, 43))
         self.workflow.add_node(WorkflowStep(
             name="survey_dry_zone", op_type="READ",
-            tool_name="fly_survey",
+            tool_name="Mavic3M__fly_survey",
             tool_args={"start_ridge": 22, "end_ridge": 43},
             depends_on=["check_drone"],
         ))
@@ -178,9 +178,9 @@ class ScenarioFarmWorldIrrigation(Scenario):
             print(field_ops.irrigate_range(_DRY_START, _DRY_END, _IRRIGATION_HOURS))
         self.workflow.add_node(WorkflowStep(
             name="irrigate", op_type="WRITE",
-            tool_name="irrigate_range",
-            tool_args={"start_ridge": _DRY_START, "end_ridge": _DRY_END,
-                        "hours": _IRRIGATION_HOURS},
+            tool_name="FieldOpsApp__irrigate_range",
+            tool_args={"start": _DRY_START, "end": _DRY_END,
+                        "duration_hours": _IRRIGATION_HOURS},
             depends_on=["survey_dry_zone"],
         ))
 
@@ -188,6 +188,6 @@ class ScenarioFarmWorldIrrigation(Scenario):
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="verify_soil", op_type="READ",
-            tool_name="read_soil_sensors", tool_args={},
+            tool_name="SensorApp__read_soil_sensors", tool_args={},
             depends_on=["irrigate"],
         ))

@@ -155,7 +155,7 @@ class ScenarioFarmWorldDroneSurvey(Scenario):
             print(mavic.fly_survey(0, 63))
         self.workflow.add_node(WorkflowStep(
             name="survey_first", op_type="READ",
-            tool_name="fly_survey",
+            tool_name="Mavic3M__fly_survey",
             tool_args={"start_ridge": 0, "end_ridge": 63},
             depends_on=["check_drone"],
         ))

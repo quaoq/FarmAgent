@@ -75,7 +75,10 @@ def LD_norm(
         if fail_states is None
         else fail_states
     )
-    return (2 * ld) / (len(a) + len(b) + ld)
+    denom = len(a) + len(b) + ld
+    if denom == 0:
+        return 0.0
+    return (2 * ld) / denom
 
 
 def path_correctness(

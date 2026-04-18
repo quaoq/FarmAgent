@@ -5,6 +5,16 @@ from rsare.validation.utils.data_structures import (
 )
 
 
+def normalize_tool_name(full_name: str) -> str:
+    """
+    Return the unqualified tool name, e.g.
+    ``WeatherApp__get_current_weather`` -> ``get_current_weather``.
+    """
+    if "__" in full_name:
+        return full_name.split("__", 1)[1]
+    return full_name
+
+
 def symbol_generator():
     """Yields symbols: 'A', 'B', ..., 'Z', 'AA', 'AB', ... skipping 'X'"""
     i = 0
@@ -44,7 +54,7 @@ def extract_tool_names(tools: list[dict]) -> list[ToolInfo]:
         }
 
     This function:
-    - strips any app class prefix before "__" from the function name
+    - preserves the canonical schema name exactly as provided
     - collects argument names and their JSON-schema `"type"` as strings
     """
     tool_infos = list()
@@ -52,12 +62,6 @@ def extract_tool_names(tools: list[dict]) -> list[ToolInfo]:
         # Defensive access to the inner "function" dict
         func_def = tool.get("function", {})
         full_name = func_def.get("name", "")
-
-        # Remove app class name prefix (e.g., "ConfigurationsApp__set_config" -> "set_config")
-        if "__" in full_name:
-            clean_name = full_name.split("__", 1)[1]  # Take everything after first "__"
-        else:
-            clean_name = full_name
 
         # Build arguments dict from JSON-schema "properties"
         params = func_def.get("parameters", {}) or {}
@@ -69,7 +73,7 @@ def extract_tool_names(tools: list[dict]) -> list[ToolInfo]:
             arguments[arg_name] = arg_type
 
         tool_info = ToolInfo(
-            name=clean_name,
+            name=full_name,
             arguments=arguments,
         )
         tool_infos.append(tool_info)
@@ -91,8 +95,12 @@ def parse_agent_output(
     """
     agent_sequence: list[FunctionCall] = []
 
-    # Precompute allowed tool names for quick membership checks
-    allowed_tool_names = {info.name for info in tool_infos}
+    # Precompute exact and short-name lookups.
+    exact_tool_names = {info.name for info in tool_infos}
+    short_name_to_full_names: dict[str, list[str]] = {}
+    for info in tool_infos:
+        short_name = normalize_tool_name(info.name)
+        short_name_to_full_names.setdefault(short_name, []).append(info.name)
 
     # If a dict is passed (the DAG), iterate over its values
     steps = (
@@ -107,8 +115,15 @@ def parse_agent_output(
         if not function_name:
             continue
 
+        canonical_name = function_name if function_name in exact_tool_names else None
+        if canonical_name is None:
+            short_name = normalize_tool_name(function_name)
+            candidates = short_name_to_full_names.get(short_name, [])
+            if len(candidates) == 1:
+                canonical_name = candidates[0]
+
         # Skip if this function is not part of the known tools
-        if function_name not in allowed_tool_names:
+        if canonical_name is None:
             continue
 
         # Extract arguments from WorkflowStep.tool_args, excluding 'self'
@@ -124,7 +139,7 @@ def parse_agent_output(
                 type=type(arg_value).__name__ if arg_value is not None else "NoneType",
             )
 
-        function_call = FunctionCall(name=function_name, arguments=arguments)
+        function_call = FunctionCall(name=canonical_name, arguments=arguments)
         agent_sequence.append(function_call)
 
     return agent_sequence
@@ -152,11 +167,12 @@ def fc2symbol(func_call: FunctionCall, alphabet: dict[str, FunctionCall]) -> str
     # check non-general matches
     for symbol in candidate_symbols:
         # non-general candidates have a 1-1 match of arguments
-        check = all(
-            str(func_call.arguments[arg_name].value)
-            == str(alphabet[symbol].arguments[arg_name].value)
-            for arg_name in func_call.arguments
-        )
+        check = True
+        for arg_name, arg in func_call.arguments.items():
+            expected_arg = alphabet[symbol].arguments.get(arg_name)
+            if expected_arg is None or str(arg.value) != str(expected_arg.value):
+                check = False
+                break
         if check:
             out_symbol = symbol
             break

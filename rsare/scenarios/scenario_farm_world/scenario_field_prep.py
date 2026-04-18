@@ -153,7 +153,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
             name="check_weather", op_type="READ",
-            tool_name="get_current_weather", tool_args={}, depends_on=[],
+            tool_name="WeatherApp__get_current_weather", tool_args={}, depends_on=[],
         ))
 
         # step 2: check forecast
@@ -161,7 +161,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(weather.get_forecast(days=3))
         self.workflow.add_node(WorkflowStep(
             name="check_forecast", op_type="READ",
-            tool_name="get_forecast", tool_args={"days": 3},
+            tool_name="WeatherApp__get_forecast", tool_args={"days": 3},
             depends_on=["check_weather"],
         ))
 
@@ -170,7 +170,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
-            tool_name="read_soil_sensors", tool_args={},
+            tool_name="SensorApp__read_soil_sensors", tool_args={},
             depends_on=["check_forecast"],
         ))
 
@@ -179,7 +179,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.get_status())
         self.workflow.add_node(WorkflowStep(
             name="check_tractor", op_type="READ",
-            tool_name="get_status", tool_args={},
+            tool_name="TractorApp__get_status", tool_args={},
             depends_on=["read_soil"],
         ))
 
@@ -188,7 +188,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(farm_world.get_inventory())
         self.workflow.add_node(WorkflowStep(
             name="check_inventory", op_type="READ",
-            tool_name="get_inventory", tool_args={},
+            tool_name="FarmWorldApp__get_inventory", tool_args={},
             depends_on=["check_tractor"],
         ))
 
@@ -197,7 +197,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.attach_implement("grader"))
         self.workflow.add_node(WorkflowStep(
             name="attach_grader", op_type="WRITE",
-            tool_name="attach_implement", tool_args={"implement": "grader"},
+            tool_name="TractorApp__attach_implement", tool_args={"implement": "grader"},
             depends_on=["check_inventory"],
         ))
 
@@ -206,7 +206,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.level())
         self.workflow.add_node(WorkflowStep(
             name="level", op_type="WRITE",
-            tool_name="level", tool_args={},
+            tool_name="TractorApp__level", tool_args={},
             depends_on=["attach_grader"],
         ))
 
@@ -215,7 +215,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.detach_implement())
         self.workflow.add_node(WorkflowStep(
             name="detach_grader", op_type="WRITE",
-            tool_name="detach_implement", tool_args={},
+            tool_name="TractorApp__detach_implement", tool_args={},
             depends_on=["level"],
         ))
 
@@ -224,8 +224,8 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.load_fertilizer(_BASE_FERTILIZER_LOAD_KG))
         self.workflow.add_node(WorkflowStep(
             name="load_fertilizer", op_type="WRITE",
-            tool_name="load_fertilizer",
-            tool_args={"amount_kg": _BASE_FERTILIZER_LOAD_KG},
+            tool_name="TractorApp__load_fertilizer",
+            tool_args={"kg": _BASE_FERTILIZER_LOAD_KG},
             depends_on=["detach_grader"],
         ))
 
@@ -234,7 +234,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.base_fertilize())
         self.workflow.add_node(WorkflowStep(
             name="base_fertilize", op_type="WRITE",
-            tool_name="base_fertilize", tool_args={},
+            tool_name="TractorApp__base_fertilize", tool_args={},
             depends_on=["load_fertilizer"],
         ))
 
@@ -243,7 +243,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.attach_implement("furrower"))
         self.workflow.add_node(WorkflowStep(
             name="attach_furrower", op_type="WRITE",
-            tool_name="attach_implement", tool_args={"implement": "furrower"},
+            tool_name="TractorApp__attach_implement", tool_args={"implement": "furrower"},
             depends_on=["base_fertilize"],
         ))
 
@@ -252,7 +252,7 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.form_ridges(1.1))
         self.workflow.add_node(WorkflowStep(
             name="form_ridges", op_type="WRITE",
-            tool_name="form_ridges", tool_args={"ridge_width_m": 1.1},
+            tool_name="TractorApp__form_ridges", tool_args={"ridge_width_m": 1.1},
             depends_on=["attach_furrower"],
         ))
 
@@ -261,7 +261,6 @@ class ScenarioFarmWorldFieldPrep(Scenario):
             print(tractor.detach_implement())
         self.workflow.add_node(WorkflowStep(
             name="detach_furrower", op_type="WRITE",
-            tool_name="detach_implement", tool_args={},
+            tool_name="TractorApp__detach_implement", tool_args={},
             depends_on=["form_ridges"],
         ))
-
