@@ -133,8 +133,11 @@ def ktc(predicted, gold, verbose=False):
             print(f"Matched symbols: {matched}, n: {n}, returning 0.0")
         return 0.0, []
 
-    # map each symbol to its index in gold
-    rank = {s: i for i, s in enumerate(gold) if s in seen}
+    # map each symbol to its first occurrence index in gold
+    rank = {}
+    for i, s in enumerate(gold):
+        if s in seen and s not in rank:
+            rank[s] = i
     # build list of ranks in the order of matched
     ranks = [rank[s] for s in matched]
 

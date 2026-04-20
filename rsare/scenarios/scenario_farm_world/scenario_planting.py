@@ -27,10 +27,9 @@ SCENARIO_INPUT_DETAIL = """
 3. 检查拖拉机油量（当前80L，不满）和料斗状态。
 4. 查看仓库种子库存。
 5. 装载第一批种子（料斗最大30万株）。
-6. 逐批播种，每次4条垄（如0-3, 4-7, ...）。播深4cm，株距5cm。每条垄约消耗10720株种子。
-7. 播完约28条垄后料斗会空，再装第二批。
-8. 播完约56条垄后再装第三批，播完剩余的56-63垄。
-9. 全部64垄播完后向我汇报。
+6. 逐批播种，每次4条垄（如0-3, 4-7, ...）。播深4cm，株距5cm。。
+7. 种子不够了，再装下一批。
+8. 全部64垄播完后立即结束任务向我汇报。
 """
 
 SCENARIO_INPUT = """整地已完成，今天开始播种。务必今天种完全部64垄。完成后告诉我。"""
@@ -176,7 +175,7 @@ class ScenarioFarmWorldPlanting(Scenario):
 
         # Batch 1: plant ridges 0-31 (8 passes of 4 ridges)
         prev = "load_seeds_1"
-        for i in range(8):
+        for i in range(7):
             start = i * 4
             end = start + 3
             name = f"plant_b1_{start}_{end}"
@@ -204,7 +203,7 @@ class ScenarioFarmWorldPlanting(Scenario):
         # Batch 2: plant ridges 28-55 (7 passes)
         prev = "load_seeds_2"
         for i in range(7):
-            start = 28 + i * 4
+            start = 24 + i * 4
             end = start + 3
             name = f"plant_b2_{start}_{end}"
             if run_oracle:
@@ -230,8 +229,8 @@ class ScenarioFarmWorldPlanting(Scenario):
 
         # Batch 3: plant ridges 56-63 (2 passes)
         prev = "load_seeds_3"
-        for i in range(2):
-            start = 56 + i * 4
+        for i in range(4):
+            start = 48 + i * 4
             end = start + 3
             name = f"plant_b3_{start}_{end}"
             if run_oracle:

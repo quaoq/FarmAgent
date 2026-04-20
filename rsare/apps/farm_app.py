@@ -1,16 +1,28 @@
 from rsare.scenarios.time_manager import TimeManager
 import random
-from typing import Any
+from typing import Any, Callable
 
 class App:
     def __init__(self, name: str | None = None, *args, **kwargs):
         super().__init__()
         self.name = self.__class__.__name__ if name is None else name
         self.time_manager = TimeManager()
+        self.schedule_event_callbacks = {}
         self.set_seed(0)
 
     def register_time_manager(self, time_manager: TimeManager):
         self.time_manager = time_manager
+
+    def register_event_scheduler(
+        self,
+        key: str,
+        schedule_event: Callable[[Any], None],
+    ) -> None:
+        self.schedule_event_callbacks[key] = schedule_event
+
+    def schedule_event(self, event: Any) -> None:
+        for callback in self.schedule_event_callbacks.values():
+            callback(event)
 
     def set_seed(self, seed: int) -> None:
         # Derive a new seed from the combination of the input seed and app name

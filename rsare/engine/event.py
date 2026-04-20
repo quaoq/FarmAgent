@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Callable
 
 
 @dataclass
@@ -45,3 +46,18 @@ class Event(ABC):
         This method should be overridden by subclasses to define specific event behavior.
         """
         ...
+
+
+@dataclass
+class NotificationEvent(Event):
+    """
+    Simple event that emits a single notification message when triggered.
+    """
+
+    message: str = ""
+    callback: Callable[[], None] | None = None
+
+    def step(self):
+        if self.callback is not None:
+            self.callback()
+        return self.message

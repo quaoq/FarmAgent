@@ -21,6 +21,7 @@ from rsare.apps.farm_world.farm_world_app import (
     FarmWorldApp,
 )
 from rsare.apps.farm_world.weather_app import WeatherApp
+from rsare.engine.event import NotificationEvent
 
 # Zhiyuan D1 Max walking speed (m/s)
 _ROBOT_SPEED_MS         = 0.8
@@ -204,6 +205,14 @@ class RobotApp(App):
         self._charge_started_at = now
         self._charge_complete_at = now + _CHARGE_DURATION_S
         self._charge_start_battery_pct = self._battery_pct
+        self.schedule_event(
+            NotificationEvent(
+                time_start=self._charge_complete_at,
+                time_duration=0,
+                message=f"{self.name}: charge complete",
+                callback=self._complete_charge,
+            )
+        )
         self.is_state_modified = True
         return {
             "status": "charging_started",
@@ -252,6 +261,16 @@ class RobotApp(App):
             return None
         remaining_seconds = max(0.0, self._charge_complete_at - self.time_manager.time())
         return round(remaining_seconds / 60.0, 1)
+
+    def _complete_charge(self) -> None:
+        if not self._charging:
+            return
+        self._battery_pct = 100.0
+        self._charging = False
+        self._charge_started_at = None
+        self._charge_complete_at = None
+        self._charge_start_battery_pct = None
+        self.is_state_modified = True
 
     def _serialize_charge_session(self) -> dict[str, Any] | None:
         if not self._charging:

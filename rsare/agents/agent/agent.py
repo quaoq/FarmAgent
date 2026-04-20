@@ -42,9 +42,19 @@ class Agent(BaseAgent):
 
         # Call corresponding function with provided arguments
         start_time = time.time()
+        message_count_before_tool = len(self.messages.messages)
         tool_response = self.tools_map[name](**args)
         elapsed_time = round(time.time() - start_time, 4)
+
+        # If the tool injected notifications into the conversation while it was
+        # running, delay them until after the required tool response message.
+        deferred_messages = self.messages.messages[message_count_before_tool:]
+        if deferred_messages:
+            del self.messages.messages[message_count_before_tool:]
+
         self.messages.tool_call_response(tool_response, tool_call, elapsed_time)
+        if deferred_messages:
+            self.messages.messages.extend(deferred_messages)
         self.workflow.add_node(WorkflowStep(
             op_type="TOOL",
             tool_name=name,

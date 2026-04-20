@@ -22,11 +22,11 @@ SCENARIO_INPUT_DETAIL = """
 请按以下步骤操作：
 1. 查看天气，确认无雨且风速<12m/s（无人机飞行条件）。
 2. Mavic3M 检查无人机电量（当前约65%，不满）。
-3. 飞行巡查全部64垄。Mavic3M每垄消耗1%电量，安全阈值20%，65%电量大约只能飞45垄左右，飞到电量不足时会自动返航，返回部分结果。
-4. 返航后给无人机充电（约30分钟）。
-5. 充电完成后用 fly_survey(起始垄, 63) 继续飞剩余未覆盖的区域。
-6. 如果发现NDVI偏低的区域，检查机器狗Robot0电量，然后派机器狗到异常垄做地面巡检确认病虫害。
-7. 全部完成后向我汇报巡查结果。
+3. 飞行巡查全部64垄。飞到电量不足时会自动返航，返回部分结果。
+4. 返航后，检查无人机状态，给无人机充电（约30分钟）。
+5. 充电完成后用 继续飞剩余未覆盖的区域。
+6. 全部飞完后，如果发现NDVI偏低的区域，然后派机器狗到异常垄做地面巡检确认病虫害，执行前先检查机器狗Robot0电量，。
+7. 全部完成后立即结束任务向我汇报巡查结果。
 """
 
 SCENARIO_INPUT = """作物进入V4阶段了，飞一圈无人机看看长势。发现问题的话派机器狗去确认一下。完成后告诉我。"""
@@ -133,6 +133,7 @@ class ScenarioFarmWorldDroneSurvey(Scenario):
         weather = self.get_typed_app(WeatherApp)
         mavic = self.get_typed_app(DroneApp, app_name="Mavic3M")
         robot_0 = self.get_typed_app(RobotApp, app_name="Robot0")
+        system = self.get_typed_app(SystemApp)
 
         # Pre-flight checks
         if run_oracle:
@@ -178,6 +179,15 @@ class ScenarioFarmWorldDroneSurvey(Scenario):
             depends_on=["check_battery_after"],
         ))
 
+        if run_oracle:
+            system.wait_for_notification(timeout=30 * 60)
+        self.workflow.add_node(WorkflowStep(
+            name="wait_for_charge_complete", op_type="READ",
+            tool_name="SystemApp__wait_for_notification",
+            tool_args={"timeout": 30 * 60},
+            depends_on=["charge_drone"],
+        ))
+
         # Continue survey: remaining ridges 42-63
         if run_oracle:
             print(mavic.fly_survey(42, 63))
@@ -185,7 +195,7 @@ class ScenarioFarmWorldDroneSurvey(Scenario):
             name="survey_remaining", op_type="READ",
             tool_name="Mavic3M__fly_survey",
             tool_args={"start_ridge": 42, "end_ridge": 63},
-            depends_on=["charge_drone"],
+            depends_on=["wait_for_charge_complete"],
         ))
 
         # Ground-truth with robot

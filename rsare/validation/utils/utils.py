@@ -16,19 +16,18 @@ def normalize_tool_name(full_name: str) -> str:
 
 
 def symbol_generator():
-    """Yields symbols: 'A', 'B', ..., 'Z', 'AA', 'AB', ... skipping 'X'"""
+    """Yields symbols: 'A', 'B', ..., 'Z', 'AA', 'AB', ... skipping any containing 'X'"""
     i = 0
     while True:
         s = ""
         n = i
         while True:
             s = chr(ord("A") + (n % 26)) + s
-            if s == "X":
-                s = chr(ord("A") + ((n + 1) % 26)) + s[1:]  # skip 'X'
             n = n // 26 - 1
             if n < 0:
                 break
-        yield s
+        if "X" not in s:
+            yield s
         i += 1
 
 
@@ -143,6 +142,15 @@ def parse_agent_output(
         agent_sequence.append(function_call)
 
     return agent_sequence
+def _values_equal(a, b) -> bool:
+    """Compare two argument values, treating numeric types as equal if their values match."""
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return a == b
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(_values_equal(x, y) for x, y in zip(a, b))
+    return str(a) == str(b)
+
+
 def fc2symbol(func_call: FunctionCall, alphabet: dict[str, FunctionCall]) -> str:
     """
     Convert function call to corresponding symbol in alphabet.
@@ -170,7 +178,7 @@ def fc2symbol(func_call: FunctionCall, alphabet: dict[str, FunctionCall]) -> str
         check = True
         for arg_name, arg in func_call.arguments.items():
             expected_arg = alphabet[symbol].arguments.get(arg_name)
-            if expected_arg is None or str(arg.value) != str(expected_arg.value):
+            if expected_arg is None or not _values_equal(arg.value, expected_arg.value):
                 check = False
                 break
         if check:

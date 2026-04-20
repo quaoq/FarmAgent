@@ -14,21 +14,19 @@ from rsare.scenarios.scenario.scenario import Scenario
 from rsare.scenarios.scenario.workflow import WorkflowStep
 from rsare.scenarios.scenario_farm_world.Contants import DETAILED_BRIEFING
 
-_DRY_START = 20
-_DRY_END = 39
+_DRY_START = 22
+_DRY_END = 32
 _IRRIGATION_HOURS = 1.5
 
 SCENARIO_INPUT_DETAIL = """
 作物已进入V2生长阶段（播种后约22天），最近持续干旱无雨。
 请按以下步骤操作：
 1. 查看今天天气。
-2. 查看未来几天预报，如果近期有雨就不用灌溉了，让天然降雨补充水分。
+2. 查看未来3天预报，如果近期有雨就不用灌溉了，让天然降雨补充水分。
 3. 读取6个土壤传感器，找出VWC < 0.20的干旱区域（正常应在0.20-0.30之间）。
-4. 用 Mavic3M 检查无人机电量。
-5. 飞行巡查干旱区域，通过冠层温度和NDVI确认水分胁迫情况。
-6. 对干旱区域灌溉1.5小时。灌溉会使土壤VWC增加约0.08。
-7. 灌溉完成后再次读取传感器，确认土壤湿度已恢复到正常范围。
-8. 向我汇报灌溉完成情况。
+4. 对干旱区域灌溉1.5小时。灌溉会使土壤VWC增加约0.08。
+5. 灌溉后等待系统在约2小时后发送通知，再次读取传感器，确认土壤湿度已恢复到正常范围。
+6. 全部完成后立即结束任务向我汇报灌溉完成情况。
 """
 
 SCENARIO_INPUT = """最近一直没下雨，地有点干了。查查哪些地方缺水，灌溉一下。完成后告诉我。"""
@@ -41,7 +39,8 @@ class ScenarioFarmWorldIrrigation(Scenario):
     Crops are at V2-V3 stage. A dry spell has left ridges 20-39 with low
     soil moisture. The agent must identify the dry zone via sensors and
     drone survey, check the forecast (no rain coming), then irrigate the
-    affected ridges. After irrigation, re-read sensors to confirm.
+    affected ridges. After the irrigation-effect notification arrives,
+    re-read sensors to confirm.
     """
 
     scenario_id: str = "scenario_farm_world_irrigation"
@@ -133,6 +132,7 @@ class ScenarioFarmWorldIrrigation(Scenario):
         sensor = self.get_typed_app(SensorApp)
         field_ops = self.get_typed_app(FieldOpsApp)
         mavic = self.get_typed_app(DroneApp, app_name="Mavic3M")
+        system = self.get_typed_app(SystemApp)
 
         if run_oracle:
             print(weather.get_current_weather())
@@ -158,30 +158,22 @@ class ScenarioFarmWorldIrrigation(Scenario):
         ))
 
         if run_oracle:
-            print(mavic.check_status())
-        self.workflow.add_node(WorkflowStep(
-            name="check_drone", op_type="READ",
-            tool_name="Mavic3M__check_status", tool_args={},
-            depends_on=["read_soil"],
-        ))
-
-        if run_oracle:
-            print(mavic.fly_survey(22, 43))
-        self.workflow.add_node(WorkflowStep(
-            name="survey_dry_zone", op_type="READ",
-            tool_name="Mavic3M__fly_survey",
-            tool_args={"start_ridge": 22, "end_ridge": 43},
-            depends_on=["check_drone"],
-        ))
-
-        if run_oracle:
             print(field_ops.irrigate_range(_DRY_START, _DRY_END, _IRRIGATION_HOURS))
         self.workflow.add_node(WorkflowStep(
             name="irrigate", op_type="WRITE",
             tool_name="FieldOpsApp__irrigate_range",
             tool_args={"start": _DRY_START, "end": _DRY_END,
                         "duration_hours": _IRRIGATION_HOURS},
-            depends_on=["survey_dry_zone"],
+            depends_on=["read_soil"],
+        ))
+
+        if run_oracle:
+            system.wait_for_notification(timeout=2 * 60 * 60)
+        self.workflow.add_node(WorkflowStep(
+            name="wait_for_irrigation_effect", op_type="READ",
+            tool_name="SystemApp__wait_for_notification",
+            tool_args={"timeout": 2 * 60 * 60},
+            depends_on=["irrigate"],
         ))
 
         if run_oracle:
@@ -189,5 +181,5 @@ class ScenarioFarmWorldIrrigation(Scenario):
         self.workflow.add_node(WorkflowStep(
             name="verify_soil", op_type="READ",
             tool_name="SensorApp__read_soil_sensors", tool_args={},
-            depends_on=["irrigate"],
+            depends_on=["wait_for_irrigation_effect"],
         ))
