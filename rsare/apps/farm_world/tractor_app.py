@@ -50,7 +50,9 @@ _WIDTH_FERTILIZE_M    = 6.0           # broadcast spreader
 # Levelling attachment working widths (m) [PDF-p4]
 _ATTACH_WIDTH_M = {
     "grader":    3.0,   # 平地机
-    "furrower":   0.0,   # 开沟机
+    "furrower":   1.1,   # 开沟机
+    "harvester":  4.4,   # 收割机
+    "sprayer":   11.0,   # 喷药机
 }
 ATTACHMENTS = list(_ATTACH_WIDTH_M.keys())
 
@@ -272,7 +274,7 @@ class TractorApp(App):
     @agent_tool
     def get_status(self) -> dict[str, Any]:
         """
-        Return current tractor  resource levels and implement status.
+        Return current tractor  resource levels ； implement status；available implements.
         """
         return {
             "fuel_tank_l": round(self._fuel_tank_l, 1),

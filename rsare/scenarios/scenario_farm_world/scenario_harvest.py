@@ -21,11 +21,11 @@ SCENARIO_INPUT_DETAIL = """
 3. 读冠层传感器，看 NDVI 是否全田枯黄（R8 应该偏低）。
 4. 确认所有 64 条垄都到 R8 且籽粒含水 13-18%。
 5. 用 Mavic3M 飞一圈（fly_survey 0-63）验证均匀成熟。
-6. 检查拖拉机：油只有 20 L → 先 refuel 到 100 L。
+6. 检查拖拉机状态：先挂接收割机,油只有 20 L → 再refuel 到 100 L。
 7. 一趟 4 垄，共 16 趟，从 0-3 开始到 60-63。
    每趟约 980 kg 粮食进入储罐（容量 2000 kg），
    所以每 2 趟就要 unload_grain 一次把粮食卸到仓库。
-8. 全部收割完 + 卸完粮后，看 inventory 汇报总产量。
+8. 全部收割完 + 卸完粮后，卸载收割机，看 inventory 汇报总产量。
 9. 全部完成后立即结束任务向我汇报。
 """
 
@@ -199,6 +199,14 @@ class ScenarioFarmWorldHarvest(Scenario):
         ))
 
         if run_oracle:
+            print(tractor.attach_implement("harvester"))
+        self.workflow.add_node(WorkflowStep(
+            name="attach_harvester", op_type="WRITE",
+            tool_name="TractorApp__attach_implement", tool_args={"implement": "harvester"},
+            depends_on=["check_tractor"],
+        ))
+
+        if run_oracle:
             print(tractor.refuel(80.0))
         self.workflow.add_node(WorkflowStep(
             name="refuel", op_type="WRITE",
@@ -233,6 +241,13 @@ class ScenarioFarmWorldHarvest(Scenario):
                 ))
                 prev = unload_name
 
+        if run_oracle:
+            print(tractor.detach_implement())
+        self.workflow.add_node(WorkflowStep(
+            name="detach_furrower", op_type="WRITE",
+            tool_name="TractorApp__detach_implement", tool_args={},
+            depends_on=[prev],
+        ))
         # Check inventory
         if run_oracle:
             print(farm_world.get_inventory())

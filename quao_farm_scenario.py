@@ -5,10 +5,12 @@ from rsare.engine.engine import Engine
 from rsare.scenarios.scenario.workflow import Workflow
 from rsare.scenarios.scenario_farm_world.Contants import DETAILED_BRIEFING
 from rsare.scenarios.scenario_farm_world.scenario_drone_survey import ScenarioFarmWorldDroneSurvey
+from rsare.scenarios.scenario_farm_world.scenario_fertilizer import ScenarioFarmWorldFertilizer
 
 from rsare.scenarios.scenario_farm_world.scenario_field_prep import ScenarioFarmWorldFieldPrep
 from rsare.scenarios.scenario_farm_world.scenario_irrigation import ScenarioFarmWorldIrrigation
 from rsare.scenarios.scenario_farm_world.scenario_pesticide import ScenarioFarmWorldPesticide
+from rsare.scenarios.scenario_farm_world.scenario_pesticide_outbreak import ScenarioFarmWorldPesticideOutbreak
 from rsare.scenarios.scenario_farm_world.scenario_planting import ScenarioFarmWorldPlanting
 
 
@@ -18,7 +20,7 @@ def main():
     llm = DeepSeekClient(model="deepseek", temperature=1.0)
 
 
-    scenario = ScenarioFarmWorldPesticide()
+    scenario = ScenarioFarmWorldPlanting()
     if scenario.workflow is None:
         scenario.workflow = Workflow()
 
@@ -40,7 +42,7 @@ def main():
 
     engine.run_scenario_oracle()
     # oracle_workflow = Workflow.load_workflow(f"workflow_oracle_{scenario.scenario_id}_{DETAILED_BRIEFING}.json")
-    engine.scenario.workflow.save_workflow(f"workflow_oracle_{scenario.scenario_id}_{DETAILED_BRIEFING}.json")
+    engine.scenario.workflow.save_workflow(f"0421workflow_oracle_{scenario.scenario_id}_{DETAILED_BRIEFING}.json")
 
     # initiate_scenario populates scenario.apps with shared app instances
     # reset the scenario to clear any state changes from the oracle run before running the agent
@@ -60,7 +62,7 @@ def main():
     engine = Engine(agent, scenario)
 
     engine.run_scenario_agent()
-    engine.agent.workflow.save_workflow(f"workflow_agent_{scenario.scenario_id}_{DETAILED_BRIEFING}.json")
+    engine.agent.workflow.save_workflow(f"0421workflow_agent_{scenario.scenario_id}_{DETAILED_BRIEFING}.json")
     #
     oracle_workflow = engine.scenario.workflow
     agent_workflow = engine.agent.workflow
