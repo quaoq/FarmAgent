@@ -143,10 +143,8 @@ class ScenarioFarmWorldPesticide(Scenario):
     def oracle_solution(self, run_oracle=False):
         weather = self.get_typed_app(WeatherApp)
         sensor = self.get_typed_app(SensorApp)
-        farm_world = self.get_typed_app(FarmWorldApp)
         mavic = self.get_typed_app(DroneApp, app_name="Mavic3M")
         robot_0 = self.get_typed_app(RobotApp, app_name="Robot0")
-        tractor = self.get_typed_app(TractorApp)
         field_ops = self.get_typed_app(FieldOpsApp)
 
         if run_oracle:
@@ -169,7 +167,7 @@ class ScenarioFarmWorldPesticide(Scenario):
         self.workflow.add_node(WorkflowStep(
             name="read_canopy", op_type="READ",
             tool_name="SensorApp__read_canopy_sensors", tool_args={},
-            depends_on=["read_soil"],
+            depends_on=["check_weather"],
         ))
 
         if run_oracle:

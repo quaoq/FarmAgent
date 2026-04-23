@@ -8,6 +8,7 @@ from rsare.scenarios.scenario_farm_world.scenario_drone_survey import ScenarioFa
 from rsare.scenarios.scenario_farm_world.scenario_fertilizer import ScenarioFarmWorldFertilizer
 
 from rsare.scenarios.scenario_farm_world.scenario_field_prep import ScenarioFarmWorldFieldPrep
+from rsare.scenarios.scenario_farm_world.scenario_field_prep_planting import ScenarioFarmWorldFieldPrepPlanting
 from rsare.scenarios.scenario_farm_world.scenario_irrigation import ScenarioFarmWorldIrrigation
 from rsare.scenarios.scenario_farm_world.scenario_pesticide import ScenarioFarmWorldPesticide
 from rsare.scenarios.scenario_farm_world.scenario_pesticide_outbreak import ScenarioFarmWorldPesticideOutbreak
@@ -20,7 +21,7 @@ def main():
     llm = DeepSeekClient(model="deepseek", temperature=1.0)
 
 
-    scenario = ScenarioFarmWorldPlanting()
+    scenario = ScenarioFarmWorldFieldPrepPlanting()
     if scenario.workflow is None:
         scenario.workflow = Workflow()
 

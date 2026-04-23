@@ -29,7 +29,7 @@ SCENARIO_INPUT_DETAIL = """
 6. 全部完成后立即结束任务向我汇报灌溉完成情况。
 """
 
-SCENARIO_INPUT = """最近一直没下雨，地有点干了。查查哪些地方缺水，灌溉一下。完成后告诉我。"""
+SCENARIO_INPUT = """最近一直没下雨，地有点干了。查查哪些地方缺水，灌溉一下，灌溉后请再次检查。完成后告诉我。"""
 
 
 class ScenarioFarmWorldIrrigation(Scenario):
@@ -131,7 +131,6 @@ class ScenarioFarmWorldIrrigation(Scenario):
         weather = self.get_typed_app(WeatherApp)
         sensor = self.get_typed_app(SensorApp)
         field_ops = self.get_typed_app(FieldOpsApp)
-        mavic = self.get_typed_app(DroneApp, app_name="Mavic3M")
         system = self.get_typed_app(SystemApp)
 
         if run_oracle:

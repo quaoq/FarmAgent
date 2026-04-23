@@ -148,10 +148,10 @@ class ScenarioFarmWorldHarvest(Scenario):
         ))
 
         if run_oracle:
-            print(weather.get_forecast())
+            print(weather.get_forecast(days=3))
         self.workflow.add_node(WorkflowStep(
             name="check_forecast", op_type="READ",
-            tool_name="WeatherApp__get_forecast", tool_args={},
+            tool_name="WeatherApp__get_forecast", tool_args={"days": 3},
             depends_on=["check_weather"],
         ))
 
