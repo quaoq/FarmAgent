@@ -38,12 +38,12 @@ def _extract_tool_steps(dag) -> list[dict]:
     result = []
     for step in steps:
         if isinstance(step, dict):
-            if step.get("tool_name") and step.get("op_type") != "USER":
+            if step.get("tool_name") and step.get("op_type") in ["TOOL", "READ","WRITE"]:
                 result.append(step)
         else:
             tool_name = getattr(step, "tool_name", None)
             op_type = getattr(step, "op_type", None)
-            if tool_name and op_type != "USER":
+            if tool_name and op_type in  ["TOOL", "READ","WRITE"]:
                 args = getattr(step, "tool_args", {}) or {}
                 result.append({"tool_name": tool_name, "tool_args": args})
     return result

@@ -14,40 +14,47 @@ from rsare.scenarios.scenario_farm_world.Contants import DETAILED_BRIEFING, loca
 
 _OUTBREAK_START = 15
 _OUTBREAK_END = 39
-_INSPECT_RIDGE = 27
 _REFUEL_L = 80.0
 _PESTICIDE_LOAD_L = 250.0
 
+# Ridges to inspect across the full outbreak zone
+_INSPECT_RIDGES = [15, 20, 25, 30, 35, 39]
+
 SCENARIO_INPUT_DETAIL = """
 作物已进入V4-V5生长阶段（播种后约45天），固定传感器显示多个区域NDVI异常偏低，怀疑大面积蚜虫爆发。
+在今天完成巡查、复核和喷药处理。
 请按以下步骤操作：
 1. 查看当前天气，确认风速<5m/s、无雨（喷药条件）。
-2. 查看未来3天预报，确认喷药窗口（后天有雨，今天必须喷）。
+2. 查看未来3天预报，确认喷药窗口。
 3. 读取冠层传感器，找出NDVI偏低的区域。
-4. 检查Mavic3M状态，飞行巡查异常区域确认虫害范围。
+4. 检查Mavic3M状态，对冠层传感器提示的异常带进行航测，确认虫害范围；如果因电量不足中途返航，给无人机充电（约30分钟）。
+   充电完成后继续飞剩余未覆盖的区域。
 5. 读取土壤传感器，确认VWC<0.35（拖拉机可下地）。
-6. 检查Robot0状态，派机器狗到虫害中心区域地面复核确认蚜虫。
+6. 检查Robot0状态，用Robot0沿无人机确认的连续虫害带做6个地面复核点：从低垄号到高垄号按约5垄间距抽样，避开未见虫的缓冲垄，并在中心热点附近加密，确认是否为蚜虫；
+    如果电量不足，给Robot0充电（约60分钟）。充电完成后继续复核剩余未区域。
 7. 检查拖拉机状态和仓库库存。
-8. 给拖拉机装载喷药器、 加80.0L油、装250.0L药。
-9. 用拖拉机喷杆分多趟喷药（每趟最多10垄），覆盖全部虫害区域。
+8. 给拖拉机挂接喷药器，加80.0L油，再向喷药箱装250.0L药。
+9. 用拖拉机喷杆按喷药（每趟最多10垄），覆盖全部虫害区域。
 10. 全部完成后卸载喷药器、立即结束任务向我汇报。
 """
 
-SCENARIO_INPUT = """传感器显示大面积虫害，核实后大规模喷药处理，完成后汇报。"""
+SCENARIO_INPUT = """传感器显示大面积虫害，全面巡查核实后大规模喷药处理，完成后汇报。"""
 
 
-class ScenarioFarmWorldPesticideOutbreak(Scenario):
+class ScenarioFarmWorldPesticideOutbreakPlus(Scenario):
     """
-    Large-scale pest outbreak response with tractor boom spraying.
+    Large-scale pest outbreak with battery-constrained drone and robot.
 
-    Crops are at V4-V5 stage. A major aphid outbreak spans ridges 15-39
-    (25 ridges). The agent must follow a layered monitoring workflow:
-    canopy sensors detect anomaly → drone confirms hotspot extent →
-    robot ground-verifies → tractor boom sprays at scale (multi-pass).
-    Rain forecast on day 3 creates urgency to spray today.
+    Compared to the base scenario:
+    - Mavic3M starts at 35% battery → partial survey → charge → finish survey
+    - Robot0 inspects 6 evenly spaced representative ridges
+      → 5 inspections exhaust battery → charge → finish the last point
+    - Then tractor boom sprays as before
+
+    Drone charge: ~30 min.  Robot charge: ~60 min.
     """
 
-    scenario_id: str = "scenario_farm_world_pesticide_outbreak"
+    scenario_id: str = "scenario_farm_world_pesticide_outbreak_plus"
     scenario_input: str = SCENARIO_INPUT_DETAIL if DETAILED_BRIEFING else SCENARIO_INPUT
     start_time: float | None = (
         local_timestamp(2026, 6, 15, 8, 0, 0)
@@ -148,7 +155,9 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
         tractor._completed_prep_ops = ["level", "base_fertilize", "form_ridges"]
         tractor._fuel_tank_l = 15.0
         tractor._pesticide_tank_l = 0.0
-        mavic._battery_pct = 80.0
+
+        # Drone starts low — forces a mid-survey charge
+        mavic._battery_pct = 35.0
 
     def oracle_solution(self, run_oracle=False):
         weather = self.get_typed_app(WeatherApp)
@@ -157,14 +166,16 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
         mavic = self.get_typed_app(DroneApp, app_name="Mavic3M")
         robot_0 = self.get_typed_app(RobotApp, app_name="Robot0")
         tractor = self.get_typed_app(TractorApp)
+        system = self.get_typed_app(SystemApp)
 
-        # --- Phase 1: Diagnosis ---
+        # ---- Phase 1: Weather & sensor diagnosis ----
 
         if run_oracle:
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
             name="check_weather", op_type="READ",
-            tool_name="WeatherApp__get_current_weather", tool_args={}, depends_on=[],
+            tool_name="WeatherApp__get_current_weather", tool_args={},
+            depends_on=[],
         ))
 
         if run_oracle:
@@ -183,6 +194,8 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
             depends_on=["check_forecast"],
         ))
 
+        # ---- Phase 2: Drone survey (partial → charge → finish) ----
+
         if run_oracle:
             print(mavic.check_status())
         self.workflow.add_node(WorkflowStep(
@@ -191,22 +204,56 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
             depends_on=["read_canopy"],
         ))
 
+        # First survey attempt — will abort partway due to low battery
         if run_oracle:
             print(mavic.fly_survey(11, 43))
         self.workflow.add_node(WorkflowStep(
-            name="survey_outbreak", op_type="READ",
+            name="survey_partial", op_type="READ",
             tool_name="Mavic3M__fly_survey",
             tool_args={"start_ridge": 11, "end_ridge": 43},
             depends_on=["check_drone"],
         ))
+
+        # Charge drone
+        if run_oracle:
+            print(mavic.charge())
+        self.workflow.add_node(WorkflowStep(
+            name="drone_charge", op_type="WRITE",
+            tool_name="Mavic3M__charge", tool_args={},
+            depends_on=["survey_partial"],
+        ))
+
+        # Wait for drone charge (~30 min)
+        if run_oracle:
+            system.wait_for_notification(timeout=30 * 60)
+        self.workflow.add_node(WorkflowStep(
+            name="wait_drone_charge", op_type="READ",
+            tool_name="SystemApp__wait_for_notification",
+            tool_args={"timeout": 30 * 60},
+            depends_on=["drone_charge"],
+        ))
+
+        # Finish survey — cover the ridges missed in first attempt
+        if run_oracle:
+            print(mavic.fly_survey(25, 43))
+        self.workflow.add_node(WorkflowStep(
+            name="survey_finish", op_type="READ",
+            tool_name="Mavic3M__fly_survey",
+            tool_args={"start_ridge": 25, "end_ridge": 43},
+            depends_on=["wait_drone_charge"],
+        ))
+
+        # ---- Phase 3: Soil check ----
 
         if run_oracle:
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
             tool_name="SensorApp__read_soil_sensors", tool_args={},
-            depends_on=["survey_outbreak"],
+            depends_on=["survey_finish"],
         ))
+
+        # ---- Phase 4: Robot ground inspection (5 ridges → charge → 1 ridge) ----
 
         if run_oracle:
             print(robot_0.check_status())
@@ -216,23 +263,61 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
             depends_on=["read_soil"],
         ))
 
+        # First 5 inspections (100% → 0%)
+        prev = "check_robot"
+        for idx, ridge_id in enumerate(_INSPECT_RIDGES[:5]):
+            name = f"robot_inspect_{ridge_id}"
+            if run_oracle:
+                print(robot_0.inspect_ridge(ridge_id))
+            self.workflow.add_node(WorkflowStep(
+                name=name, op_type="READ",
+                tool_name="Robot0__inspect_ridge",
+                tool_args={"ridge_id": ridge_id},
+                depends_on=[prev],
+            ))
+            prev = name
+
+        # Robot charge
         if run_oracle:
-            print(robot_0.inspect_ridge(_INSPECT_RIDGE))
+            print(robot_0.charge())
         self.workflow.add_node(WorkflowStep(
-            name="robot_inspect", op_type="READ",
-            tool_name="Robot0__inspect_ridge",
-            tool_args={"ridge_id": _INSPECT_RIDGE},
-            depends_on=["check_robot"],
+            name="robot_charge", op_type="WRITE",
+            tool_name="Robot0__charge", tool_args={},
+            depends_on=[prev],
         ))
 
-        # --- Phase 2: Prepare tractor ---
+        # Wait for robot charge (~60 min)
+        if run_oracle:
+            system.wait_for_notification(timeout=60 * 60)
+        self.workflow.add_node(WorkflowStep(
+            name="wait_robot_charge", op_type="READ",
+            tool_name="SystemApp__wait_for_notification",
+            tool_args={"timeout": 60 * 60},
+            depends_on=["robot_charge"],
+        ))
+
+        # Remaining inspection
+        prev = "wait_robot_charge"
+        for ridge_id in _INSPECT_RIDGES[5:]:
+            name = f"robot_inspect_{ridge_id}"
+            if run_oracle:
+                print(robot_0.inspect_ridge(ridge_id))
+            self.workflow.add_node(WorkflowStep(
+                name=name, op_type="READ",
+                tool_name="Robot0__inspect_ridge",
+                tool_args={"ridge_id": ridge_id},
+                depends_on=[prev],
+            ))
+            prev = name
+
+        # ---- Phase 5: Prepare tractor & spray ----
 
         if run_oracle:
             print(tractor.get_status())
         self.workflow.add_node(WorkflowStep(
             name="check_tractor", op_type="READ",
             tool_name="TractorApp__get_status", tool_args={},
-            depends_on=["robot_inspect"],
+            depends_on=[prev],
         ))
 
         if run_oracle:
@@ -247,7 +332,8 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
             print(tractor.attach_implement("sprayer"))
         self.workflow.add_node(WorkflowStep(
             name="attach_sprayer", op_type="WRITE",
-            tool_name="TractorApp__attach_implement", tool_args={"implement": "sprayer"},
+            tool_name="TractorApp__attach_implement",
+            tool_args={"implement": "sprayer"},
             depends_on=["check_inventory"],
         ))
 
@@ -256,7 +342,7 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
         self.workflow.add_node(WorkflowStep(
             name="refuel", op_type="WRITE",
             tool_name="TractorApp__refuel", tool_args={"liters": _REFUEL_L},
-            depends_on=["check_inventory"],
+            depends_on=["attach_sprayer"],
         ))
 
         if run_oracle:
@@ -268,8 +354,7 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
             depends_on=["refuel"],
         ))
 
-        # --- Phase 3: Spray (3 passes) ---
-
+        # Spray 3 passes
         if run_oracle:
             print(tractor.apply_pesticide(15, 24))
         self.workflow.add_node(WorkflowStep(
@@ -300,7 +385,7 @@ class ScenarioFarmWorldPesticideOutbreak(Scenario):
         if run_oracle:
             print(tractor.detach_implement())
         self.workflow.add_node(WorkflowStep(
-            name="detach_furrower", op_type="WRITE",
+            name="detach_sprayer", op_type="WRITE",
             tool_name="TractorApp__detach_implement", tool_args={},
             depends_on=["spray_pass_3"],
         ))

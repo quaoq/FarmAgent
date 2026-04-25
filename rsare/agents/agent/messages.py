@@ -12,11 +12,11 @@ class Messages:
         if system_message is not None:
             self.messages.append({"role": "system", "content": system_message}) 
 
-    def user_input(self, input):
-        self.messages.append({"role": "user", "content": input})
+    def user_input(self, input,time=None):
+        self.messages.append({"role": "user", "content": input ,"time": time})
 
-    def system_notify(self, input):
-        self.messages.append({"role": "user", "content": input})
+    def system_notify(self, input,time=None):
+        self.messages.append({"role": "system", "content": input,"time": time})
 
     def llm_response(self, response, elapsed_time):
 
@@ -50,12 +50,13 @@ class Messages:
         })
         
 
-    def tool_call_response(self, tool_response, tool_call, elapsed_time):
+    def tool_call_response(self, tool_response, tool_call, elapsed_time,env_time):
 
         self.messages.append({
             "role": "tool",
             "tool_call_id": tool_call.id,
-            "content": str(tool_response)
+            "content": str(tool_response),
+            "time": env_time
         })
         self.runtime_metrics.append({
             "role": "tool",

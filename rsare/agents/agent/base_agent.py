@@ -1,8 +1,12 @@
 # agents/agent/base_agent.py
 
 import time
+from datetime import datetime, timezone, timedelta
 from rsare.agents.agent.messages import Messages
 from rsare.scenarios.scenario.workflow import Workflow, WorkflowStep
+
+# Beijing timezone (UTC+8)
+CST = timezone(timedelta(hours=8))
 
 class BaseAgent:
     def __init__(self, name, llm, system_message=None, messages=None):
@@ -18,7 +22,7 @@ class BaseAgent:
         self.name = name
         self.llm = llm
         self.system_message = system_message
-        self.messages = messages if messages is not None else Messages(provider=llm.provider)
+        self.messages = messages if messages is not None else Messages(provider=llm.provider, system_message=system_message)
         self.time_manager = None
         self.workflow = Workflow()
 
@@ -42,6 +46,12 @@ class BaseAgent:
         elapsed_time = round(time.time() - start_time, 4)
         self.messages.llm_response(response, elapsed_time)
         return response.choices[0].message
+
+    def env_time_str(self):
+        if self.time_manager:
+            t = self.time_manager.time()
+            return datetime.fromtimestamp(t, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
+        return None
 
     def set_time_manager(self, time_manager):
         self.time_manager = time_manager

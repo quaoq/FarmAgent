@@ -1,5 +1,8 @@
 # rsare/engine/engine.py
 import time
+from datetime import datetime, timezone, timedelta
+
+CST = timezone(timedelta(hours=8))
 from threading import Thread
 
 from rsare.apps.system import SystemApp
@@ -8,7 +11,6 @@ from rsare.scenarios.scenario.workflow import WorkflowStep
 
 
 class Engine:
-
     engine_name: str = "base_engine"
 
     def __init__(self, agent, scenario):
@@ -64,16 +66,21 @@ class Engine:
             return None
         return min(pending_events, key=lambda event: event.time_start)
 
+    def _env_time_str(self):
+        t = self.time_manager.time()
+        return datetime.fromtimestamp(t, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
+
     def _trigger_dynamic_event(self, event):
         self.current_time = self.time_manager.time()
         event.start(self.current_time)
         message = event.step()
-        self.agent.messages.system_notify(message)
+        time_str = self._env_time_str()
+        self.agent.messages.system_notify(message, time=time_str)
         self.agent.workflow.add_node(
             WorkflowStep(
-                op_type="USER",
+                op_type="system",
                 content=message,
-                time=self.current_time,
+                time=time_str,
             )
         )
         event.triggered = True
@@ -88,7 +95,9 @@ class Engine:
             None,
         )
         assert system_app is not None, "System app not found"
-        timeout_timestamp = system_app.wait_for_notification_timeout.timeout_timestamp  # type: ignore
+        wait_timeout = system_app.wait_for_notification_timeout
+        assert wait_timeout is not None, "Wait for notification timeout not set"
+        timeout_timestamp = wait_timeout.timeout_timestamp
 
         while True:
             self.current_time = self.time_manager.time()
@@ -99,18 +108,6 @@ class Engine:
                 jump_time = timeout_timestamp - self.time_manager.time()
                 if jump_time > 0:
                     self.time_manager.add_offset(jump_time)
-                timeout_message = (
-                    f"{system_app.name}: Wait for notification timeout reached after "
-                    f"{system_app.wait_for_notification_timeout.timeout} seconds"
-                )
-                self.agent.messages.system_notify(timeout_message)
-                self.agent.workflow.add_node(
-                    WorkflowStep(
-                        op_type="USER",
-                        content=timeout_message,
-                        time=self.time_manager.time(),
-                    )
-                )
                 system_app.reset_wait_for_notification_timeout()
                 return
 

@@ -31,6 +31,7 @@ class WorkflowStep:
             "tool_name": self.tool_name,
             "tool_args": self.tool_args,
             "depends_on": self.depends_on,
+            "time": self.time,
         }
 
     def __repr__(self):
@@ -85,6 +86,7 @@ class Workflow:
                 tool_name=step_dict.get("tool_name"),
                 tool_args=step_dict.get("tool_args"),
                 depends_on=step_dict.get("depends_on", []),
+                time=step_dict.get("time"),
             )
             workflow.add_node(node)
 

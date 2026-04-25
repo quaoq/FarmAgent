@@ -5,6 +5,9 @@ import json
 import re
 from pathlib import Path
 from collections import deque, OrderedDict
+from datetime import datetime, timezone, timedelta
+
+CST = timezone(timedelta(hours=8))
 
 from rsare.agents.agent.base_agent import BaseAgent
 from rsare.agents.agent.toolset_builder import build_toolset
@@ -25,20 +28,25 @@ class Agent(BaseAgent):
             toolsets (list, optional): A list of Class objects (e.g., database API) from which agent tools are extracted.
         """
         super().__init__(name, llm, system_message, messages)
-        self.tools=None
-        self.tool_schemas=None
-        self.tools_map=None
+        self.tools = None
+        self.tool_schemas = None
+        self.tools_map = None
         if toolsets is not None:
             self.tools, self.tool_schemas, self.tools_map = \
                 build_toolset(toolsets)
 
     def call_function(self, tool_call):
-        
+
         name = tool_call.function.name
-        tool_call_id=tool_call.id
+        tool_call_id = tool_call.id
         args = json.loads(tool_call.function.arguments)
-        self.log(f"Calling tool: {name}({args})")
-        tool_type=tool_call.type
+
+        # Format environment time
+        env_time = self.time_manager.time()
+        env_datetime = datetime.fromtimestamp(env_time, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
+
+        self.log(f"[Env Time: {env_datetime}] Calling tool: {name}({args})")
+        tool_type = tool_call.type
 
         # Call corresponding function with provided arguments
         start_time = time.time()
@@ -52,7 +60,9 @@ class Agent(BaseAgent):
         if deferred_messages:
             del self.messages.messages[message_count_before_tool:]
 
-        self.messages.tool_call_response(tool_response, tool_call, elapsed_time)
+        # Add time prefix to tool response
+        env_ts = self.env_time_str()
+        self.messages.tool_call_response(tool_response, tool_call, elapsed_time, env_ts)
         if deferred_messages:
             self.messages.messages.extend(deferred_messages)
         self.workflow.add_node(WorkflowStep(
@@ -60,21 +70,22 @@ class Agent(BaseAgent):
             tool_name=name,
             tool_args=args,
             content=tool_response,
-            time=self.time_manager.time())
+            time=env_ts)
         )
         return tool_response
-        
+
     def run(self, input):
         """
         Add the user input to the conversation history, then call chat_completion()
         """
-        self.messages.user_input(input)
-        self.workflow.add_node(WorkflowStep(op_type="USER", content=input,time=self.time_manager.time()))
+        env_ts = self.env_time_str()
+        self.messages.user_input(input, time=env_ts)
+        self.workflow.add_node(WorkflowStep(op_type="USER", content=input, time=env_ts))
 
         while True:
 
             message = self.chat_completion(self.messages(), tools=self.tool_schemas)
-            if not message.tool_calls: # if finished handling tool calls, break
+            if not message.tool_calls:  # if finished handling tool calls, break
                 break
 
             # === handle tool calls ===

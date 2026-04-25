@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 from rsare.apps.farm_world.drone_app import DroneApp
 from rsare.apps.farm_world.farm_world_app import FarmWorldApp
 from rsare.apps.farm_world.field_ops_app import FieldOpsApp
@@ -12,7 +10,7 @@ from rsare.apps.farm_world.weather_app import WeatherApp
 from rsare.apps.system import SystemApp
 from rsare.scenarios.scenario.scenario import Scenario
 from rsare.scenarios.scenario.workflow import WorkflowStep
-from rsare.scenarios.scenario_farm_world.Contants import DETAILED_BRIEFING
+from rsare.scenarios.scenario_farm_world.Contants import DETAILED_BRIEFING, local_timestamp
 
 SCENARIO_INPUT_DETAIL = """
 大豆已成熟，进入收获阶段。请按真实农民流程操作：
@@ -45,7 +43,7 @@ class ScenarioFarmWorldHarvest(Scenario):
     scenario_id: str = "scenario_farm_world_harvest"
     scenario_input: str = SCENARIO_INPUT_DETAIL if DETAILED_BRIEFING else SCENARIO_INPUT
     start_time: float | None = (
-        datetime(2026, 9, 25, 8, 0, 0, tzinfo=timezone.utc).timestamp() - 8 * 3600
+        local_timestamp(2026, 9, 25, 8, 0, 0)
     )
     time_increment_in_seconds: int = 60
 

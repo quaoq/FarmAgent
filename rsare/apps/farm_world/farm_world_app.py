@@ -9,6 +9,7 @@ Farm layout: 268 m × 71 m, 64 ridges (ID 0-63), ridge width 1.1 m. [PDF-p1]
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 from rsare.agents.agent.toolset_builder import agent_tool
@@ -35,6 +36,8 @@ GRAIN_KG_PER_RIDGE = 245.0
 
 # Pesticide consumed per ridge per spray pass (L) [设计, based on 300-800L / 5-10 ridges]
 PESTICIDE_L_PER_RIDGE = 8.0
+
+CST = timezone(timedelta(hours=8))
 
 # --------------------------------------------------------------------------
 # Post-spray pest/disease pressure trajectory [设计, based on PDF-p9 "药效
@@ -150,7 +153,7 @@ class FarmWorldApp(App):
     def get_state(self) -> dict[str, Any]:
         return {
             "app_name": self.name,
-            "sim_date": self._sim_date,
+            "sim_date": self._current_sim_date(),
             "season_phase": self._season_phase,
             "ridges": [r.to_dict() for r in self._ridges],
             "inventory": self._inventory.to_dict(),
@@ -196,7 +199,7 @@ class FarmWorldApp(App):
                 "grain_moisture_pct": round(r.grain_moisture_pct, 1),
             })
         return {
-            "sim_date": self._sim_date,
+            "sim_date": self._current_sim_date(),
             "season_phase": self._season_phase,
             "inventory": self._inventory.to_dict(),
             "ridges_overview": overview,
@@ -439,6 +442,9 @@ class FarmWorldApp(App):
             k: v for k, v in ridge.to_dict().items()
             if k not in self._OBSERVATION_FIELDS
         }
+
+    def _current_sim_date(self) -> str:
+        return datetime.fromtimestamp(self.time_manager.time(), tz=CST).strftime("%Y-%m-%d")
 
     # ------------------------------------------------------------------
     # Internal helpers (used by device apps directly, not via tool system)

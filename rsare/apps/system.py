@@ -6,7 +6,7 @@
 
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Callable
 
 from rsare.agents.agent.toolset_builder import agent_tool
@@ -51,7 +51,7 @@ class SystemApp(App):
         :returns: a dictionary with the keys "current_timestamp" (current time as timestamp), "current_datetime" (current time as datetime), "current_weekday" (current weekday)
         """
         timestamp = self.time_manager.time()
-        date = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        date = datetime.fromtimestamp(timestamp, tz=timezone(timedelta(hours=8)))
         return {
             "current_timestamp": timestamp,
             "current_datetime": date.strftime("%Y-%m-%d %H:%M:%S"),
@@ -79,15 +79,15 @@ class SystemApp(App):
         timeout: int = 0,
     ) -> None:
         """
-        Wait for a specified amount of time or until the next notification or user message is received, whichever comes first.
+        Advance time until the next notification in the timeout window, or to
+        the timeout timestamp if no notification occurs.
         This method should only be used when there are no other tasks to perform.
-        :param timeout: The maximum amount of time to wait in seconds. If a notification is received before this time elapses, the wait will end early.
+        :param timeout: The maximum amount of time to wait in seconds.
         """
-        # This method efficiently jumps from event to event without advancing time incrementally, making it more efficient than wait_for_notification.
         timeout = int(timeout)
         assert timeout >= 0, "Timeout must be non-negative"
-        # Create a new timeout object that will be used by the notification system.
-        # It will create a notification after the timeout is reached if no other notification is received in between.
+        # The engine uses this window to decide whether to trigger an event or
+        # simply advance simulated time to the timeout timestamp.
         self.wait_for_notification_timeout = WaitForNotificationTimeout(
             timeout=int(timeout), time_created=self.time_manager.time()
         )

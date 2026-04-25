@@ -12,40 +12,58 @@ from rsare.scenarios.scenario.scenario import Scenario
 from rsare.scenarios.scenario.workflow import WorkflowStep
 from rsare.scenarios.scenario_farm_world.Contants import DETAILED_BRIEFING, local_timestamp
 
+_BASE_FERTILIZER_LOAD_KG = 200.0
 _SEEDS_PER_LOAD = 300000
 _SEED_TYPE = "STANDARD"
 _DEPTH_CM = 4.0
 _SPACING_CM = 5.0
+_REFUEL_L = 50.0
 
 SCENARIO_INPUT_DETAIL = """
-整地已完成（平整、施基肥、起垄），今天开始播种大豆。
+天气窗口只有今明两天（后天下雨），今天必须把整地和播种全部完成。
 请按以下步骤操作：
-1. 查看今天天气，确认无雨；
-2. 读取土壤传感器，确认VWC在0.20-0.30之间、土壤温度>10°C（适合播种）。
-3. 检查拖拉机油量（当前80L，不满）和料斗状态。
-4. 查看仓库种子库存。
-5. 装载第一批种子（料斗最大30万株）。
-6. 逐批播种，每次4条垄（如0-3, 4-7, ...）。播深4cm，株距5cm。。
-7. 种子不够了，再装下一批。
-8. 全部64垄播完后立即结束任务向我汇报。
+
+【整地阶段】
+1. 查看今天天气，确认无雨可以下地。
+2. 查看3天天气预报。
+3. 读取土壤传感器，确认VWC<0.35（拖拉机可通行）且土壤温度>10°C（适合播种）。
+4. 检查拖拉机油量（当前60L）和挂接状态。
+5. 查看仓库库存，确认化肥、种子和柴油充足。
+6. 平整地面：挂接平地机→旋耕平整全田→卸下平地机。
+7. 施基肥：装载200kg化肥→全田撒施。
+8. 起垄：挂接开沟机→起垄（垄宽1.1m）→卸下开沟机。
+
+【播种阶段】
+9. 检查拖拉机油量，建议加50.0油。
+10. 装载第一批种子（料斗最大30万株）。
+11. 逐批播种，每次4条垄（0-3, 4-7, ...），播深4cm，株距5cm。
+12. 种子不够了再装下一批。
+13. 全部64垄播完后立即结束任务向我汇报。
 """
 
-SCENARIO_INPUT = """整地已完成，今天开始播种。务必今天种完全部64垄。完成后告诉我。"""
+SCENARIO_INPUT = """今天必须把整地和播种全部完成。做完告诉我。"""
 
 
-class ScenarioFarmWorldPlanting(Scenario):
+class ScenarioFarmWorldFieldPrepPlanting(Scenario):
     """
-    Planting 64 ridges of soybean after field prep is complete.
+    Combined field prep + planting scenario.
 
-    A realistic planting shift: the agent must check conditions, load seeds,
-    plant in 4-ridge batches, reload seeds when the hopper runs low, monitor
-    fuel, and handle the full 64-ridge field.
+    A realistic full-day operation: weather window closes tomorrow (rain on day 3),
+    so the farmer must complete both field preparation and planting today.
+
+    Timeline:
+      Phase 1 (field prep): level → base_fertilize → form_ridges
+      Phase 2 (planting): refuel → load seeds → plant all 64 ridges in batches
+
+    Key challenge: tractor starts with 60L fuel. Field prep consumes 24L (8L×3),
+    leaving 36L. Planting needs 32L (16 passes × 2L), leaving only 4L margin.
+    Agent should refuel before planting to be safe.
     """
 
-    scenario_id: str = "scenario_farm_world_planting"
+    scenario_id: str = "scenario_farm_world_field_prep_planting"
     scenario_input: str = SCENARIO_INPUT_DETAIL if DETAILED_BRIEFING else SCENARIO_INPUT
     start_time: float | None = (
-        local_timestamp(2026, 4, 28, 7, 0, 0)
+        local_timestamp(2026, 4, 26, 8, 0, 0)
     )
     time_increment_in_seconds: int = 60
 
@@ -95,33 +113,30 @@ class ScenarioFarmWorldPlanting(Scenario):
         ]
 
         # --- Configure initial state ---
-        tractor._completed_prep_ops = ["level", "base_fertilize", "form_ridges"]
-
         weather.set_weather(
-            date="2026-04-28",
+            date="2026-04-26",
             temp_c=18.0,
             humidity_pct=50.0,
-            wind_speed_ms=2.5,
+            wind_speed_ms=2.0,
             rainfall_mm=0.0,
             solar_radiation=480.0,
             forecast=[
-                {"date": "2026-04-29", "temp_c": 19.0, "humidity_pct": 45.0,
-                 "wind_speed_ms": 2.0, "rainfall_mm": 0.0, "solar_radiation": 500.0},
-                {"date": "2026-04-30", "temp_c": 16.0, "humidity_pct": 65.0,
-                 "wind_speed_ms": 4.0, "rainfall_mm": 5.0, "solar_radiation": 250.0},
-                {"date": "2026-05-01", "temp_c": 14.0, "humidity_pct": 70.0,
-                 "wind_speed_ms": 6.0, "rainfall_mm": 12.0, "solar_radiation": 180.0},
+                {"date": "2026-04-27", "temp_c": 19.0, "humidity_pct": 45.0,
+                 "wind_speed_ms": 2.5, "rainfall_mm": 0.0, "solar_radiation": 500.0},
+                {"date": "2026-04-28", "temp_c": 16.0, "humidity_pct": 70.0,
+                 "wind_speed_ms": 5.0, "rainfall_mm": 8.0, "solar_radiation": 200.0},
             ],
             avg_soil_vwc=0.24,
         )
-        farm_world.set_season_phase("planting")
+        farm_world.set_season_phase("prep")
 
         for i in range(64):
             r = farm_world.get_ridge(i)
-            r.soil_vwc = 0.22 + (i % 5) * 0.01
+            r.soil_vwc = 0.22 + ((i % 5) - 2) * 0.01
             r.soil_temp_c = 12.0 + (i % 4) * 0.5
 
-        tractor._fuel_tank_l = 80.0
+        # Tractor starts with 60L fuel (tight but enough for prep+planting if careful)
+        tractor._fuel_tank_l = 60.0
 
     def oracle_solution(self, run_oracle=False):
         weather = self.get_typed_app(WeatherApp)
@@ -129,7 +144,9 @@ class ScenarioFarmWorldPlanting(Scenario):
         tractor = self.get_typed_app(TractorApp)
         farm_world = self.get_typed_app(FarmWorldApp)
 
-        # Pre-planting checks
+        # ===== PHASE 1: FIELD PREP =====
+
+        # Pre-work checks
         if run_oracle:
             print(weather.get_current_weather())
         self.workflow.add_node(WorkflowStep(
@@ -138,11 +155,19 @@ class ScenarioFarmWorldPlanting(Scenario):
         ))
 
         if run_oracle:
+            print(weather.get_forecast(days=3))
+        self.workflow.add_node(WorkflowStep(
+            name="check_forecast", op_type="READ",
+            tool_name="WeatherApp__get_forecast", tool_args={"days": 3},
+            depends_on=["check_weather"],
+        ))
+
+        if run_oracle:
             print(sensor.read_soil_sensors())
         self.workflow.add_node(WorkflowStep(
             name="read_soil", op_type="READ",
             tool_name="SensorApp__read_soil_sensors", tool_args={},
-            depends_on=["check_weather"],
+            depends_on=["check_forecast"],
         ))
 
         if run_oracle:
@@ -161,6 +186,85 @@ class ScenarioFarmWorldPlanting(Scenario):
             depends_on=["check_tractor"],
         ))
 
+        # Level
+        if run_oracle:
+            print(tractor.attach_implement("grader"))
+        self.workflow.add_node(WorkflowStep(
+            name="attach_grader", op_type="WRITE",
+            tool_name="TractorApp__attach_implement", tool_args={"implement": "grader"},
+            depends_on=["check_inventory"],
+        ))
+
+        if run_oracle:
+            print(tractor.level())
+        self.workflow.add_node(WorkflowStep(
+            name="level", op_type="WRITE",
+            tool_name="TractorApp__level", tool_args={},
+            depends_on=["attach_grader"],
+        ))
+
+        if run_oracle:
+            print(tractor.detach_implement())
+        self.workflow.add_node(WorkflowStep(
+            name="detach_grader", op_type="WRITE",
+            tool_name="TractorApp__detach_implement", tool_args={},
+            depends_on=["level"],
+        ))
+
+        # Base fertilize
+        if run_oracle:
+            print(tractor.load_fertilizer(_BASE_FERTILIZER_LOAD_KG))
+        self.workflow.add_node(WorkflowStep(
+            name="load_fertilizer", op_type="WRITE",
+            tool_name="TractorApp__load_fertilizer",
+            tool_args={"kg": _BASE_FERTILIZER_LOAD_KG},
+            depends_on=["detach_grader"],
+        ))
+
+        if run_oracle:
+            print(tractor.base_fertilize())
+        self.workflow.add_node(WorkflowStep(
+            name="base_fertilize", op_type="WRITE",
+            tool_name="TractorApp__base_fertilize", tool_args={},
+            depends_on=["load_fertilizer"],
+        ))
+
+        # Form ridges
+        if run_oracle:
+            print(tractor.attach_implement("furrower"))
+        self.workflow.add_node(WorkflowStep(
+            name="attach_furrower", op_type="WRITE",
+            tool_name="TractorApp__attach_implement", tool_args={"implement": "furrower"},
+            depends_on=["base_fertilize"],
+        ))
+
+        if run_oracle:
+            print(tractor.form_ridges(1.1))
+        self.workflow.add_node(WorkflowStep(
+            name="form_ridges", op_type="WRITE",
+            tool_name="TractorApp__form_ridges", tool_args={"ridge_width_m": 1.1},
+            depends_on=["attach_furrower"],
+        ))
+
+        if run_oracle:
+            print(tractor.detach_implement())
+        self.workflow.add_node(WorkflowStep(
+            name="detach_furrower", op_type="WRITE",
+            tool_name="TractorApp__detach_implement", tool_args={},
+            depends_on=["form_ridges"],
+        ))
+
+        # ===== PHASE 2: PLANTING =====
+
+        # Refuel before planting (fuel is tight: 60-24=36L, planting needs 32L)
+        if run_oracle:
+            print(tractor.refuel(_REFUEL_L))
+        self.workflow.add_node(WorkflowStep(
+            name="refuel", op_type="WRITE",
+            tool_name="TractorApp__refuel", tool_args={"liters": _REFUEL_L},
+            depends_on=["detach_furrower"],
+        ))
+
         # Load seeds batch 1
         if run_oracle:
             print(tractor.load_seeds(_SEED_TYPE, _SEEDS_PER_LOAD))
@@ -168,12 +272,12 @@ class ScenarioFarmWorldPlanting(Scenario):
             name="load_seeds_1", op_type="WRITE",
             tool_name="TractorApp__load_seeds",
             tool_args={"seed_type": _SEED_TYPE, "count": _SEEDS_PER_LOAD},
-            depends_on=["check_inventory"],
+            depends_on=["refuel"],
         ))
 
-        # Batch 1: plant ridges 0-31 (8 passes of 4 ridges)
+        # Batch 1: plant ridges 0-23 (6 passes of 4 ridges, 257280 seeds from 300000)
         prev = "load_seeds_1"
-        for i in range(7):
+        for i in range(6):
             start = i * 4
             end = start + 3
             name = f"plant_b1_{start}_{end}"
@@ -198,9 +302,9 @@ class ScenarioFarmWorldPlanting(Scenario):
             depends_on=[prev],
         ))
 
-        # Batch 2: plant ridges 28-55 (7 passes)
+        # Batch 2: plant ridges 24-47 (6 passes)
         prev = "load_seeds_2"
-        for i in range(7):
+        for i in range(6):
             start = 24 + i * 4
             end = start + 3
             name = f"plant_b2_{start}_{end}"
@@ -225,7 +329,7 @@ class ScenarioFarmWorldPlanting(Scenario):
             depends_on=[prev],
         ))
 
-        # Batch 3: plant ridges 56-63 (2 passes)
+        # Batch 3: plant ridges 48-63 (4 passes)
         prev = "load_seeds_3"
         for i in range(4):
             start = 48 + i * 4
