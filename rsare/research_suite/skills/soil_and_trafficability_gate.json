@@ -1,0 +1,13 @@
+{
+  "skill_id": "soil_and_trafficability_gate",
+  "title": "Soil Trafficability Gate",
+  "description": "Validate soil moisture and related ground constraints before sending heavy machinery.",
+  "keywords": ["soil", "sensor", "vwc", "tractor", "trafficability", "gate"],
+  "workflow": {
+    "steps": [
+      "Read soil sensor values",
+      "Check VWC safety threshold",
+      "Only then schedule tractor operation"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+[project]
+name = "farmagent"
+version = "0.1.0"
+description = "FarmAgent research harness and scenario suite"
+requires-python = ">=3.11"
+dependencies = [
+  "openai",
+  "langchain",
+  "langchain-openai",
+  "langchain-community",
+  "faiss-cpu",
+  "sentence-transformers",
+  "numpy",
+  "pypdf",
+  "pandas",
+  "PyYAML",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

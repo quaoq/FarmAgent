@@ -70,20 +70,25 @@ class BaseLLM:
         # NOTE:  This could also be a standalone factory function, for example
         # `create_llm_endpoint(cfg: dict) -> BaseLLM` but don't really like factories
         match provider:
-            case "default"|"openai":
-                from .openai_client import OpenAIClient
-                return OpenAIClient(model, temperature, **extra_params)
+            case "default" | "openai":
+                from .openai_llm import OpenAILLM
+
+                return OpenAILLM(model, temperature, **extra_params)
             case "deepseek":
                 from .deepseek_client import DeepSeekClient
+
                 return DeepSeekClient(model, temperature, **extra_params)
             case "anthropic":
-                from .anthropic_client import AnthropicClient
+                from .anthropic_client import AnthropicClient  # type: ignore
+
                 return AnthropicClient(model, temperature, **extra_params)
             case "ollama":
-                from .ollama_client import OllamaClient
+                from .ollama_client import OllamaClient  # type: ignore
+
                 return OllamaClient(model, temperature, **extra_params)
             case "vllm":
-                from .vllm_client import VLLMClient
+                from .vllm_client import VLLMClient  # type: ignore
+
                 return VLLMClient(model, temperature, **extra_params)
             case _:
                 raise ValueError(f"Unsupported LLM Provider: {provider}")

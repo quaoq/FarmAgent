@@ -1,5 +1,4 @@
 # rsare/scenarios/scenario/scenario.py
-import datetime
 from typing import Any, Type, TypeVar, cast
 
 from rsare.apps.farm_app import App
@@ -18,28 +17,51 @@ class Scenario:
     time_increment_in_seconds: int = 1
     apps: list[App] | None = None
 
-    workflow: Workflow = None
+    workflow: Workflow | None = None
 
-    def __post_init__(self):
-        if self.apps is None:
-            self.apps = []
-        if self.dynamic_events is None:
-            self.dynamic_events = []
-        if self.workflow is None:
-            self.workflow = Workflow()
+    def __init__(
+        self,
+        scenario_id: str | int | None = None,
+        scenario_input: str | None = None,
+        dynamic_events: list[Event] | None = None,
+        start_time: float | None = None,
+        time_increment_in_seconds: int | None = None,
+        apps: list[App] | None = None,
+    ) -> None:
+        self.scenario_id = (
+            str(scenario_id)
+            if scenario_id is not None
+            else str(getattr(self.__class__, "scenario_id", ""))
+        )
+        self.scenario_input = (
+            str(scenario_input)
+            if scenario_input is not None
+            else str(getattr(self.__class__, "scenario_input", ""))
+        )
+        self.dynamic_events = list(dynamic_events) if dynamic_events is not None else []
+        self.start_time = (
+            start_time
+            if start_time is not None
+            else getattr(self.__class__, "start_time", None)
+        )
+        self.time_increment_in_seconds = (
+            int(time_increment_in_seconds)
+            if time_increment_in_seconds is not None
+            else int(getattr(self.__class__, "time_increment_in_seconds", 1))
+        )
+        self.apps = list(apps) if apps is not None else []
+        self.workflow = Workflow()
 
-
-        # Copy the class's scenario_id to the instance if the instance's scenario_id is empty
-        if not self.scenario_id and hasattr(self.__class__, "scenario_id"):
-            self.scenario_id = getattr(self.__class__, "scenario_id")
-
-    def init_and_populate_apps(self):
+    def initiate_scenario(self):
         """
         Logic that specifies the initial state for the ARE world
         This logic is scenario specific, implemented by subclasses
         """
         raise NotImplementedError(
             "initiate_scenario() must be implemented by subclasses.")
+
+    def init_and_populate_apps(self):
+        self.initiate_scenario()
 
     def oracle_solution(self, run_oracle=False):
         """

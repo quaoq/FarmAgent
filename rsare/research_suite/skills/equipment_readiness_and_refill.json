@@ -1,0 +1,14 @@
+{
+  "skill_id": "equipment_readiness_and_refill",
+  "title": "Equipment Readiness and Refill",
+  "description": "Check machine status and warehouse inventory, then refill/refuel before action.",
+  "keywords": ["tractor", "drone", "robot", "inventory", "fuel", "pesticide", "fertilizer", "seeds"],
+  "workflow": {
+    "steps": [
+      "Inspect equipment status",
+      "Inspect inventory levels",
+      "Load/refuel required resources",
+      "Re-check status before operation"
+    ]
+  }
+}

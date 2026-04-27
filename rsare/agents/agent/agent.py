@@ -7,6 +7,7 @@ from pathlib import Path
 from collections import deque, OrderedDict
 
 from rsare.agents.agent.base_agent import BaseAgent
+from rsare.agents.agent.argument_normalizer import normalize_tool_arguments
 from rsare.agents.agent.toolset_builder import build_toolset
 from rsare.scenarios.scenario.workflow import WorkflowStep
 
@@ -28,15 +29,28 @@ class Agent(BaseAgent):
         self.tools=None
         self.tool_schemas=None
         self.tools_map=None
+        self.tool_schema_properties = {}
         if toolsets is not None:
             self.tools, self.tool_schemas, self.tools_map = \
                 build_toolset(toolsets)
+            for schema in self.tool_schemas:
+                function_schema = schema.get("function", {})
+                tool_name = function_schema.get("name")
+                parameters = function_schema.get("parameters", {})
+                properties = parameters.get("properties", {})
+                if isinstance(tool_name, str) and isinstance(properties, dict):
+                    self.tool_schema_properties[tool_name] = properties
 
     def call_function(self, tool_call):
         
         name = tool_call.function.name
         tool_call_id=tool_call.id
-        args = json.loads(tool_call.function.arguments)
+        raw_args = json.loads(tool_call.function.arguments)
+        args = normalize_tool_arguments(
+            tool_name=name,
+            raw_arguments=raw_args,
+            schema_properties=self.tool_schema_properties.get(name),
+        )
         self.log(f"Calling tool: {name}({args})")
         tool_type=tool_call.type
 

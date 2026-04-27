@@ -1,0 +1,14 @@
+{
+  "skill_id": "weather_window_assessment",
+  "title": "Weather Window Assessment",
+  "description": "Check current weather and short forecast before any irreversible field operation.",
+  "keywords": ["weather", "forecast", "rainfall", "wind", "precondition", "field operation"],
+  "workflow": {
+    "steps": [
+      "Read current weather",
+      "Read 2-3 day forecast",
+      "Confirm thresholds for operation type",
+      "Proceed only if constraints are satisfied"
+    ]
+  }
+}
