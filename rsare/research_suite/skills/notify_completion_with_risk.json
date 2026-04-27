@@ -1,0 +1,14 @@
+{
+  "skill_id": "notify_completion_with_risk",
+  "title": "Completion Report with Residual Risk",
+  "description": "After operations, report completed actions, key evidence, and unresolved risks.",
+  "keywords": ["report", "completion", "risk", "evidence", "summary"],
+  "workflow": {
+    "steps": [
+      "Summarize completed actions",
+      "Attach key sensor/tool evidence",
+      "List open risks or pending checks",
+      "Notify user with concise status"
+    ]
+  }
+}

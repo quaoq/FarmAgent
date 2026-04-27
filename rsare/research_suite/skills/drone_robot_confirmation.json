@@ -1,0 +1,14 @@
+{
+  "skill_id": "drone_robot_confirmation",
+  "title": "Drone-Robot Confirmation Loop",
+  "description": "Use drone for broad detection and robot for local confirmation before treatment.",
+  "keywords": ["drone", "robot", "survey", "inspection", "confirmation", "pest", "disease"],
+  "workflow": {
+    "steps": [
+      "Run drone survey across candidate ridges",
+      "Identify suspicious zones",
+      "Send robot to confirm on ground",
+      "Escalate treatment after confirmation"
+    ]
+  }
+}

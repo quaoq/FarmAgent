@@ -1,5 +1,4 @@
-# llm_clients/openai_client.py
-
+import os
 from openai import OpenAI
 from rsare.agents.llm.base_llm import BaseLLM
 # from rsare.agents.modules.messages import ChatResponseMessage, ToolCall, ToolCallRequestMessage
@@ -9,8 +8,11 @@ class OpenAILLM(BaseLLM):
     llm_class: str = "OpenAILLM"
 
     CHAT_COMPLETION_MODELS = {
+        "o4-mini",
         "gpt-4o-mini",
         "gpt-4o",
+        "gpt-4.1-mini",
+        "gpt-4.1",
     }
     
     RESPONSES_API_MODELS = {
@@ -21,7 +23,7 @@ class OpenAILLM(BaseLLM):
         "o3",
     }
 
-    def __init__(self, model, temperature=0.1, api_key=None, **kwargs):
+    def __init__(self, model, temperature=0.1, api_key=None, base_url=None, **kwargs):
         """
         Initialize the OpenAI client.
 
@@ -32,8 +34,9 @@ class OpenAILLM(BaseLLM):
         """
         super().__init__(model, temperature, **kwargs)
         self.provider = "openai"
-        self.api_key = api_key
-        self.api_client = OpenAI()
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.base_url = base_url or os.getenv("OPENAI_BASE_URL")
+        self.api_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
 
         self.api_mode = self._resolve_api_mode(model)
 
@@ -46,8 +49,7 @@ class OpenAILLM(BaseLLM):
         elif model in self.RESPONSES_API_MODELS:
             # NOTE: we still use completions.create with reasoning models
             return "reasoning"
-        else:
-            raise ValueError(f"Unsupported OpenAI model name: {model}")
+        return "chat_completions"
 
     # Chat Completion API
     def chat_completion(self, messages, tools=None):
@@ -81,5 +83,6 @@ class OpenAILLM(BaseLLM):
         return {
             'llm_class': self.llm_class,
             'model': self.model,
-            'temperature': self.temperature
+            'temperature': self.temperature,
+            'base_url': self.base_url,
         }

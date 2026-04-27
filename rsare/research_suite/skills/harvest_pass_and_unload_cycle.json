@@ -1,0 +1,14 @@
+{
+  "skill_id": "harvest_pass_and_unload_cycle",
+  "title": "Harvest Pass + Unload Cycle",
+  "description": "Alternate harvest passes with unload cycles to avoid bin overflow and downtime.",
+  "keywords": ["harvest", "combine", "grain bin", "unload", "cycle", "throughput"],
+  "workflow": {
+    "steps": [
+      "Check harvester and moisture constraints",
+      "Harvest in passes until bin threshold",
+      "Unload grain to storage",
+      "Resume remaining passes"
+    ]
+  }
+}

@@ -15,3 +15,5 @@ sentence-transformers
 numpy
 pypdf
 pandas
+PyYAML
+pytest

@@ -38,10 +38,25 @@ class Messages:
         self.messages.append(response.choices[0].message)
         if self.provider == "openai":
             tokens = {
-                "prompt_tokens":response.usage.prompt_tokens,
-                "cached_tokens":response.usage.prompt_tokens_details.cached_tokens,
-                "completion_tokens":response.usage.completion_tokens,
-                "total_tokens":response.usage.total_tokens,
+                "prompt_tokens": response.usage.prompt_tokens,
+                "cached_tokens": response.usage.prompt_tokens_details.cached_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens,
+            }
+        else:
+            usage = getattr(response, "usage", None)
+            prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+            completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+            total_tokens = int(getattr(usage, "total_tokens", 0) or 0)
+            cached_tokens = 0
+            prompt_details = getattr(usage, "prompt_tokens_details", None)
+            if prompt_details is not None:
+                cached_tokens = int(getattr(prompt_details, "cached_tokens", 0) or 0)
+            tokens = {
+                "prompt_tokens": prompt_tokens,
+                "cached_tokens": cached_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens,
             }
         self.runtime_metrics.append({
             "role": "assistant",

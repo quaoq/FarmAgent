@@ -127,6 +127,8 @@ celerybeat.pid
 
 # Environments
 .env*
+!.env.example
+!.env.example.professor
 .venv
 env/
 venv/
@@ -188,6 +190,8 @@ data/**.csv
 data.zip
 output
 output/**.geojson
+outputs/
+tmp_out/
 **.test.py
 **.tmp.json
 **.pdf
