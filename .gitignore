@@ -207,3 +207,6 @@ workflows/**.json
 **/.faiss_index/**
 **/.skill_index_cache
 **/.skill_index_cache/**
+
+# API keys
+*.sh
